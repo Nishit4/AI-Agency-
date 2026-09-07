@@ -29,6 +29,36 @@ export async function createRazorpayOrder({ amount, receipt, notes }: CreateOrde
   });
 }
 
+export interface CreatePaymentLinkInput {
+  amount: number; // INR rupees
+  description: string;
+  customer: { name: string; email: string; contact?: string };
+  dueDate: Date;
+  notes?: Record<string, string>;
+}
+
+/**
+ * Creates a Razorpay payment link — a self-contained, emailable URL the
+ * client can pay from directly. Preferred over a bare order for invoicing
+ * since it needs no checkout page of our own.
+ */
+export async function createPaymentLink({ amount, description, customer, dueDate, notes }: CreatePaymentLinkInput) {
+  return getClient().paymentLink.create({
+    amount: Math.round(amount * 100), // paise
+    currency: "INR",
+    description,
+    customer: {
+      name: customer.name,
+      email: customer.email,
+      contact: customer.contact,
+    },
+    notify: { email: true, sms: Boolean(customer.contact) },
+    reminder_enable: true,
+    expire_by: Math.floor(dueDate.getTime() / 1000),
+    notes,
+  });
+}
+
 /**
  * Verifies the HMAC signature Razorpay sends with a `payment.captured`
  * (or checkout success) webhook/callback, using the webhook secret.

@@ -21,6 +21,7 @@ export function ApprovalCard({
   onResolved?: (id: string, status: "approved" | "rejected") => void;
 }) {
   const [loading, setLoading] = useState<"approved" | "rejected" | null>(null);
+  const [outcome, setOutcome] = useState<string | null>(null);
 
   async function resolve(status: "approved" | "rejected") {
     setLoading(status);
@@ -30,7 +31,13 @@ export function ApprovalCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: approval.id, status, resolved_by: "CEO" }),
       });
-      if (res.ok) onResolved?.(approval.id, status);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.execution?.detail) setOutcome(data.execution.detail);
+        onResolved?.(approval.id, status);
+      } else {
+        setOutcome("Could not save that — please try again.");
+      }
     } finally {
       setLoading(null);
     }
@@ -60,6 +67,8 @@ export function ApprovalCard({
       ) : (
         <Badge tone={approval.status === "approved" ? "green" : "red"}>{approval.status}</Badge>
       )}
+
+      {outcome && <p className="mt-3 text-xs text-slate-500">{outcome}</p>}
     </Card>
   );
 }

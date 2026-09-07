@@ -24,6 +24,23 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceSupabaseClient();
 
   switch (event.event) {
+    // Invoices raised via /api/invoices are Razorpay payment links, so the
+    // link id is what's stored in razorpay_order_id.
+    case "payment_link.paid": {
+      const link = event.payload?.payment_link?.entity;
+      const payment = event.payload?.payment?.entity;
+      if (link?.id) {
+        await supabase
+          .from("invoices")
+          .update({
+            status: "paid",
+            razorpay_payment_id: payment?.id ?? null,
+            paid_at: new Date().toISOString(),
+          })
+          .eq("razorpay_order_id", link.id);
+      }
+      break;
+    }
     case "payment.captured": {
       const payment = event.payload?.payment?.entity;
       const orderId = payment?.order_id;

@@ -2,6 +2,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge, type BadgeTone } from "@/components/ui/Badge";
 import { AgentChat } from "@/components/dashboard/AgentChat";
+import { CalEmbed } from "@/components/dashboard/CalEmbed";
 import { formatINR } from "@/lib/utils";
 import type { Campaign, CampaignStatus, Lead, LeadStatus } from "@/types";
 
@@ -113,6 +114,14 @@ export default async function MarketingPage() {
             </table>
           </div>
         )}
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Book an intro call</CardTitle>
+          <span className="text-xs text-slate-400">Cal.com</span>
+        </CardHeader>
+        <CalEmbed calLink={process.env.NEXT_PUBLIC_CALCOM_LINK} />
       </Card>
     </div>
   );

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/http";
 import { createServiceSupabaseClient } from "@/lib/supabase";
 import { createPaymentLink } from "@/lib/razorpay";
 import { sendEmail } from "@/lib/resend";
@@ -30,8 +31,16 @@ export async function GET(req: NextRequest) {
  * Body: { client_id, amount?, due_date?, send_email? }
  */
 export async function POST(req: NextRequest) {
+  const parsed = await parseJsonBody<{
+    client_id?: string;
+    amount?: number;
+    due_date?: string;
+    send_email?: boolean;
+  }>(req);
+  if (!parsed.ok) return parsed.response;
+
   const supabase = createServiceSupabaseClient();
-  const { client_id, amount, due_date, send_email = true } = await req.json();
+  const { client_id, amount, due_date, send_email = true } = parsed.data;
 
   if (!client_id) {
     return NextResponse.json({ error: "client_id is required" }, { status: 400 });

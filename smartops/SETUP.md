@@ -7,6 +7,24 @@ Status legend: ✅ done · ⬜ still to do
 
 ---
 
+## ⬜ 0. Anthropic — add credits (blocks all 16 agents)
+
+**Verified against the live API: your key authenticates correctly, but the
+account has a zero credit balance.** Every agent call currently fails with:
+
+> `Your credit balance is too low to access the Anthropic API.`
+
+Fix at https://console.anthropic.com → **Plans & Billing** → add credits.
+Nothing else in the app is affected — the dashboard, approvals queue, billing
+and integrations all work without it — but no agent will reply until this is
+resolved.
+
+Model in use is `claude-sonnet-4-6` (as you specified), at $3/$1M input and
+$15/$1M output. Worth knowing: `claude-sonnet-5` is both newer and cheaper
+($2/$10). Switching is a one-line change to `CLAUDE_MODEL` if you want it.
+
+---
+
 ## ⬜ 1. Supabase — database
 
 Project created and `supabase/schema.sql` run. **Re-run `schema.sql` once more**

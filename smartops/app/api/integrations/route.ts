@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/http";
 import { createServiceSupabaseClient } from "@/lib/supabase";
 import { disconnectIntegration, requestConnection } from "@/lib/agents/integrations";
 import type { Integration, IntegrationStatus } from "@/types";
@@ -31,7 +32,9 @@ export async function GET(req: NextRequest) {
  * way an integration goes live is through the approvals queue.
  */
 export async function POST(req: NextRequest) {
-  const { action, integration_id, justification } = await req.json();
+  const parsed = await parseJsonBody<{ action?: string; integration_id?: string; justification?: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { action, integration_id, justification } = parsed.data;
 
   if (action !== "request") {
     return NextResponse.json(
@@ -56,7 +59,9 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/integrations — { integration_id, action: "disconnect" }
 export async function PATCH(req: NextRequest) {
-  const { integration_id, action } = await req.json();
+  const parsed = await parseJsonBody<{ integration_id?: string; action?: string }>(req);
+  if (!parsed.ok) return parsed.response;
+  const { integration_id, action } = parsed.data;
 
   if (!integration_id) {
     return NextResponse.json({ error: "integration_id is required" }, { status: 400 });

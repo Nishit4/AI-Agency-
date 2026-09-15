@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/http";
 import { runOperationsAgent } from "@/lib/agents/operations";
 import type { AgentChatRequest } from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as AgentChatRequest;
+    const parsed = await parseJsonBody<AgentChatRequest>(req);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     if (!body.message || typeof body.message !== "string") {
       return NextResponse.json({ error: "message is required" }, { status: 400 });
     }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/http";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import type { Department } from "@/types";
 
 /**
  * Inbound webhook for self-hosted n8n workflows to report results back
@@ -15,7 +17,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const parsed = await parseJsonBody<{
+    event?: string;
+    agent_name?: string;
+    department?: Department;
+    client_id?: string;
+    title?: string;
+    result?: string;
+    lead?: {
+      name?: string;
+      company?: string;
+      email?: string;
+      phone?: string;
+      source?: string;
+      campaign_id?: string;
+    };
+  }>(req);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
+
   const supabase = createServiceSupabaseClient();
 
   switch (body.event) {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/http";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import type { ClientStatus } from "@/types";
 
 // GET /api/clients — list all clients, newest first.
 export async function GET() {
@@ -11,9 +13,19 @@ export async function GET() {
 
 // POST /api/clients — create a new client (e.g. after a lead converts).
 export async function POST(req: NextRequest) {
+  const parsed = await parseJsonBody<{
+    name?: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    plan_amount?: number;
+    plan_name?: string;
+    status?: ClientStatus;
+  }>(req);
+  if (!parsed.ok) return parsed.response;
+
   const supabase = createServiceSupabaseClient();
-  const body = await req.json();
-  const { name, company, email, phone, plan_amount, plan_name, status } = body;
+  const { name, company, email, phone, plan_amount, plan_name, status } = parsed.data;
 
   if (!name || !company || !email) {
     return NextResponse.json({ error: "name, company, email are required" }, { status: 400 });
@@ -42,9 +54,11 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/clients — update a client: { id, ...fields }
 export async function PATCH(req: NextRequest) {
+  const parsed = await parseJsonBody<{ id?: string } & Record<string, unknown>>(req);
+  if (!parsed.ok) return parsed.response;
+
   const supabase = createServiceSupabaseClient();
-  const body = await req.json();
-  const { id, ...updates } = body;
+  const { id, ...updates } = parsed.data;
 
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 

@@ -20,7 +20,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const event = JSON.parse(rawBody);
+  // Signature already verified above, but a malformed body should still be a
+  // 400 rather than an unhandled throw.
+  let event: { event?: string; payload?: Record<string, { entity?: Record<string, string> }> };
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Body must be valid JSON." }, { status: 400 });
+  }
+
   const supabase = createServiceSupabaseClient();
 
   switch (event.event) {

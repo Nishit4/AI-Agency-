@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/http";
 import { createServiceSupabaseClient } from "@/lib/supabase";
 import { triggerWorkflow } from "@/lib/n8n";
 import { activateConnection } from "@/lib/agents/integrations";
-import type { Approval, ApprovalStatus } from "@/types";
+import type { Approval, ApprovalStatus, Department } from "@/types";
 
 // GET /api/approvals?status=pending — list approvals, newest first.
 export async function GET(req: NextRequest) {
@@ -19,10 +20,18 @@ export async function GET(req: NextRequest) {
 
 // POST /api/approvals — an agent (server-side) raises a new approval request.
 export async function POST(req: NextRequest) {
-  const supabase = createServiceSupabaseClient();
-  const body = await req.json();
+  const parsed = await parseJsonBody<{
+    department?: Department;
+    agent_name?: string;
+    title?: string;
+    description?: string;
+    payload?: Record<string, unknown>;
+    client_id?: string;
+  }>(req);
+  if (!parsed.ok) return parsed.response;
 
-  const { department, agent_name, title, description, payload, client_id } = body;
+  const supabase = createServiceSupabaseClient();
+  const { department, agent_name, title, description, payload, client_id } = parsed.data;
   if (!department || !agent_name || !title || !description) {
     return NextResponse.json({ error: "department, agent_name, title, description are required" }, { status: 400 });
   }
@@ -39,9 +48,11 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/approvals — CEO approves or rejects: { id, status, resolved_by }
 export async function PATCH(req: NextRequest) {
+  const parsed = await parseJsonBody<{ id?: string; status?: ApprovalStatus; resolved_by?: string }>(req);
+  if (!parsed.ok) return parsed.response;
+
   const supabase = createServiceSupabaseClient();
-  const body = await req.json();
-  const { id, status, resolved_by } = body as { id: string; status: ApprovalStatus; resolved_by?: string };
+  const { id, status, resolved_by } = parsed.data;
 
   if (!id || !status || !["approved", "rejected"].includes(status)) {
     return NextResponse.json({ error: "id and a valid status (approved|rejected) are required" }, { status: 400 });

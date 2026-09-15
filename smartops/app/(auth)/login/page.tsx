@@ -1,12 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // A failed magic link redirects back here with ?error=… — show it rather
+  // than silently presenting an empty form again.
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("error");
+    if (reason) {
+      setStatus("error");
+      setErrorMessage(
+        reason === "missing_code"
+          ? "That sign-in link was invalid or already used. Request a new one."
+          : reason
+      );
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -17,8 +31,12 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
+        // Must land on the callback route, not /dashboard directly — the
+        // code in the link has to be exchanged for a session cookie first.
         emailRedirectTo:
-          typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined,
+          typeof window !== "undefined"
+            ? `${window.location.origin}/auth/callback?next=/dashboard`
+            : undefined,
       },
     });
 

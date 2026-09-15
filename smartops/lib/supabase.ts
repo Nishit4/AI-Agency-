@@ -1,3 +1,4 @@
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Fall back to harmless placeholders so `next build` doesn't crash when
@@ -10,13 +11,18 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let browserClient: SupabaseClient | null = null;
 
 /**
- * Browser / client-component client. Respects RLS and the CEO's
- * magic-link auth session. Lazily instantiated and memoized.
+ * Browser / client-component client.
+ *
+ * Must be the auth-helpers client, not a plain `createClient`: it stores the
+ * session in cookies, which is the only thing `middleware.ts` can read. A
+ * plain client keeps the session in localStorage, so the middleware would see
+ * no session and bounce every /dashboard request back to /login forever.
  */
 export function createBrowserSupabaseClient(): SupabaseClient {
   if (!browserClient) {
-    browserClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true },
+    browserClient = createClientComponentClient({
+      supabaseUrl,
+      supabaseKey: supabaseAnonKey,
     });
   }
   return browserClient;

@@ -187,7 +187,56 @@ insert into agents (name, department, role) values
   ('CMO Agent',          'marketing', 'Owns marketing strategy and campaign planning'),
   ('Content Writer',     'marketing', 'Drafts landing pages, emails and social copy'),
   ('Lead Gen Agent',     'marketing', 'Sources and qualifies inbound/outbound leads'),
-  ('SEO Analyst',        'marketing', 'Monitors and improves organic search performance')
+  ('SEO Analyst',        'marketing', 'Monitors and improves organic search performance'),
+  ('Integrations Agent', 'technology', 'Manages plugins, MCP servers and third-party connections; requests CEO approval before connecting anything')
+on conflict (name) do nothing;
+
+-- ---------- integrations (plugins / MCP servers / APIs) ----------
+-- Owned by the Integrations Agent. Note there is deliberately NO column for
+-- a secret value: `credential_env_var` names the environment variable that
+-- holds the credential, so the database never stores one.
+do $$ begin
+  create type integration_kind as enum ('mcp', 'plugin', 'api', 'webhook');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type integration_status as enum ('available', 'pending_approval', 'connected', 'disabled', 'error');
+exception when duplicate_object then null; end $$;
+
+create table if not exists integrations (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null unique,
+  provider text not null,
+  kind integration_kind not null,
+  description text not null default '',
+  status integration_status not null default 'available',
+  credential_env_var text,
+  endpoint text,
+  scopes text[] not null default '{}',
+  config jsonb not null default '{}'::jsonb,
+  connected_at timestamptz,
+  last_checked_at timestamptz,
+  last_error text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_integrations_status on integrations(status);
+
+-- Catalog of connections the Integrations Agent can propose. Everything
+-- starts 'available' — nothing is live until the CEO approves it.
+insert into integrations (name, provider, kind, description, credential_env_var, endpoint, scopes) values
+  ('Gmail',            'Google',    'mcp',     'Read and send email on the agency''s behalf; used for client threads and lead follow-up.', 'GMAIL_OAUTH_TOKEN',   'https://mcp.google.com/gmail',       array['gmail.read', 'gmail.send']),
+  ('Google Calendar',  'Google',    'mcp',     'Read availability and create events for client calls.',                                     'GOOGLE_OAUTH_TOKEN',  'https://mcp.google.com/calendar',    array['calendar.read', 'calendar.write']),
+  ('Slack',            'Slack',     'mcp',     'Post agent updates and approval alerts into a workspace channel.',                          'SLACK_BOT_TOKEN',     'https://mcp.slack.com',              array['chat.write', 'channels.read']),
+  ('Notion',           'Notion',    'mcp',     'Sync client SOPs, deliverables and internal docs.',                                          'NOTION_API_KEY',      'https://mcp.notion.com',             array['pages.read', 'pages.write']),
+  ('Airtable',         'Airtable',  'mcp',     'Read and write client-facing trackers kept in Airtable bases.',                              'AIRTABLE_API_KEY',    'https://mcp.airtable.com',           array['bases.read', 'records.write']),
+  ('GitHub',           'GitHub',    'mcp',     'Manage repos and issues for Technology-department client work.',                             'GITHUB_TOKEN',        'https://mcp.github.com',             array['repo', 'issues']),
+  ('WhatsApp Business','Meta',      'api',     'Send template messages to Indian SMB clients and leads.',                                    'WHATSAPP_TOKEN',      'https://graph.facebook.com/v21.0',   array['messages.send']),
+  ('Razorpay',         'Razorpay',  'api',     'Payment links, invoices and settlement reconciliation.',                                     'RAZORPAY_KEY_SECRET', 'https://api.razorpay.com/v1',        array['payments.read', 'payments.write']),
+  ('Resend',           'Resend',    'api',     'Transactional email delivery for invoices and client comms.',                                'RESEND_API_KEY',      'https://api.resend.com',             array['email.send']),
+  ('n8n',              'n8n',       'webhook', 'Self-hosted automation workflows triggered by approved actions.',                            'N8N_API_KEY',         null,                                 array['workflows.read', 'workflows.execute']),
+  ('Cal.com',          'Cal.com',   'plugin',  'Embedded scheduling for intro calls with qualified leads.',                                  'CALCOM_API_KEY',      'https://api.cal.com/v1',             array['bookings.read']),
+  ('Google Analytics', 'Google',    'api',     'Traffic and conversion data for the SEO Analyst.',                                           'GA_SERVICE_ACCOUNT',  'https://analyticsdata.googleapis.com', array['analytics.read'])
 on conflict (name) do nothing;
 
 -- ---------- row level security ----------
@@ -204,6 +253,7 @@ alter table invoices enable row level security;
 alter table campaigns enable row level security;
 alter table leads enable row level security;
 alter table agent_messages enable row level security;
+alter table integrations enable row level security;
 
 do $$
 declare
@@ -211,7 +261,7 @@ declare
 begin
   for t in select unnest(array[
     'clients', 'agents', 'approvals', 'agent_tasks',
-    'invoices', 'campaigns', 'leads', 'agent_messages'
+    'invoices', 'campaigns', 'leads', 'agent_messages', 'integrations'
   ])
   loop
     execute format(

@@ -101,6 +101,38 @@ export interface Lead {
   created_at: string;
 }
 
+export type IntegrationKind = "mcp" | "plugin" | "api" | "webhook";
+
+export type IntegrationStatus =
+  | "available" // in the catalog, not requested
+  | "pending_approval" // Integrations Agent has raised a request, CEO hasn't decided
+  | "connected"
+  | "disabled"
+  | "error";
+
+export interface Integration {
+  id: string;
+  name: string;
+  provider: string;
+  kind: IntegrationKind;
+  description: string;
+  status: IntegrationStatus;
+  /**
+   * Name of the environment variable holding this integration's credential
+   * — never the credential itself. Secrets live in the host's env (Vercel),
+   * so the database stays free of anything sensitive.
+   */
+  credential_env_var: string | null;
+  /** MCP server URL / API base — non-secret connection detail. */
+  endpoint: string | null;
+  scopes: string[];
+  config: Record<string, unknown>;
+  connected_at: string | null;
+  last_checked_at: string | null;
+  last_error: string | null;
+  created_at: string;
+}
+
 export interface AgentMessage {
   id: string;
   role: "user" | "assistant";

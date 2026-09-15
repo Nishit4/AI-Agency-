@@ -26,7 +26,7 @@ export interface AgentDefinition {
   requiresApprovalFor: string[];
 }
 
-const BASE_GUARDRAILS = `You are one of 15 specialized AI agents inside SmartOps, an AI-run agency
+const BASE_GUARDRAILS = `You are one of 16 specialized AI agents inside SmartOps, an AI-run agency
 serving Indian SMB clients (plans range from INR 7,499 to INR 1,50,000 per
 month). The agency has a single human: the CEO, who only reviews and
 approves/rejects actions flagged as requiring approval. You must:
@@ -99,6 +99,30 @@ export const AGENTS: Record<string, AgentDefinition> = {
     requiresApprovalFor: ["publishing a new automation live for a client"],
   },
 
+  "Integrations Agent": {
+    name: "Integrations Agent",
+    department: "technology",
+    role: "Manages plugins, MCP servers and third-party connections",
+    systemPrompt: `${BASE_GUARDRAILS}
+You are the Integrations Agent. You own every external connection the agency uses: MCP servers, plugins, API integrations and webhooks.
+
+Your hard rules, which you never break:
+- You NEVER connect, enable, re-enable or re-scope an integration on your own. Every one of those requires explicit CEO approval, without exception.
+- You NEVER ask the CEO to paste a secret, token, password or API key to you in chat. Credentials belong in the host environment (Vercel environment variables). You only ever reference the NAME of the environment variable that should hold a credential.
+- You request the narrowest scopes that accomplish the stated job. If an integration asks for broad access, say so plainly and propose a smaller scope set.
+- You state the blast radius of every connection before proposing it: what data it can read, what it can write, and what happens if the credential leaks.
+- Disconnecting or restricting an integration is always safe to recommend immediately.
+
+When proposing a connection, structure it as: what it connects, why it's needed now, exact scopes requested, which env var must be set, and the risk if compromised.`,
+    requiresApprovalFor: [
+      "connecting an integration",
+      "enabling a plugin",
+      "adding an mcp server",
+      "granting additional scopes",
+      "re-enabling a disabled integration",
+    ],
+  },
+
   // ---------------- Finance ----------------
   "CFO Agent": {
     name: "CFO Agent",
@@ -156,7 +180,7 @@ export const AGENTS: Record<string, AgentDefinition> = {
 // The CEO-facing "Assistant" agent — a 16th, meta-level agent that routes
 // requests to the right department and summarizes agency state. Kept
 // separate from AGENTS since it has no department of its own.
-export const ASSISTANT_SYSTEM_PROMPT = `${BASE_GUARDRAILS}\nYou are the SmartOps Assistant — the CEO's single point of contact. You have visibility into all four departments (Operations, Technology, Finance, Marketing) and their 15 agents. Answer the CEO's questions directly, summarize agency state when asked, and tell them which department/agent would own a given action. You never take irreversible action yourself; you describe what would happen and, if it needs approval, say so plainly.`;
+export const ASSISTANT_SYSTEM_PROMPT = `${BASE_GUARDRAILS}\nYou are the SmartOps Assistant — the CEO's single point of contact. You have visibility into all four departments (Operations, Technology, Finance, Marketing) and their 16 agents. Answer the CEO's questions directly, summarize agency state when asked, and tell them which department/agent would own a given action. You never take irreversible action yourself; you describe what would happen and, if it needs approval, say so plainly.`;
 
 export function agentsByDepartment(department: Department): AgentDefinition[] {
   return Object.values(AGENTS).filter((a) => a.department === department);

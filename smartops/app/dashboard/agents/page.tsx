@@ -21,7 +21,7 @@ export default async function AgentsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Agents</h1>
-        <p className="text-sm text-slate-500">Live status of all 15 AI agents across 4 departments.</p>
+        <p className="text-sm text-slate-500">Live status of all 16 AI agents across 4 departments.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

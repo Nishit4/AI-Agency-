@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { Department } from "@/types";
 
-type ChatEndpoint = "assistant" | Department;
+type ChatEndpoint = "assistant" | "integrations" | Department;
 
 interface ChatMessage {
   role: "user" | "assistant";

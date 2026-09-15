@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabase";
 import { triggerWorkflow } from "@/lib/n8n";
+import { activateConnection } from "@/lib/agents/integrations";
 import type { Approval, ApprovalStatus } from "@/types";
 
 // GET /api/approvals?status=pending — list approvals, newest first.
@@ -60,6 +61,8 @@ export async function PATCH(req: NextRequest) {
   let execution: ExecutionResult | undefined;
   if (status === "approved") {
     execution = await executeApprovedAction(data as Approval);
+  } else {
+    execution = await revertRejectedAction(data as Approval);
   }
 
   return NextResponse.json({ approval: data, execution });
@@ -99,6 +102,10 @@ async function executeApprovedAction(approval: Approval): Promise<ExecutionResul
       }
 
       case "technology": {
+        if (payload.action === "connect_integration" && typeof payload.integration_id === "string") {
+          const result = await activateConnection(payload.integration_id);
+          return { ran: result.connected, detail: result.detail };
+        }
         if (typeof payload.workflow !== "string") {
           return { ran: false, detail: "No workflow named on this approval." };
         }
@@ -115,6 +122,26 @@ async function executeApprovedAction(approval: Approval): Promise<ExecutionResul
     console.error("[api/approvals] execution failed", err);
     return { ran: false, detail: err instanceof Error ? err.message : "Execution failed." };
   }
+}
+
+/**
+ * Undoes any state a rejected request had put in flight — without this an
+ * integration the CEO declined would sit in `pending_approval` forever and
+ * could never be requested again.
+ */
+async function revertRejectedAction(approval: Approval): Promise<ExecutionResult | undefined> {
+  const payload = (approval.payload ?? {}) as Record<string, unknown>;
+  if (payload.action !== "connect_integration" || typeof payload.integration_id !== "string") {
+    return undefined;
+  }
+
+  const supabase = createServiceSupabaseClient();
+  await supabase
+    .from("integrations")
+    .update({ status: "available", last_error: null })
+    .eq("id", payload.integration_id);
+
+  return { ran: true, detail: `Declined — ${payload.integration_name ?? "the integration"} stays disconnected.` };
 }
 
 function appUrl() {

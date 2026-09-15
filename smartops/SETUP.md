@@ -7,9 +7,11 @@ Status legend: ✅ done · ⬜ still to do
 
 ---
 
-## ✅ 1. Supabase — database
+## ⬜ 1. Supabase — database
 
-Already done: project created, `supabase/schema.sql` run.
+Project created and `supabase/schema.sql` run. **Re-run `schema.sql` once more**
+— it now also creates the `integrations` table and the 16th agent. The file is
+written to be safely re-runnable; existing data is untouched.
 
 **Optional — load demo data** so the dashboard isn't empty:
 Supabase → **SQL Editor** → paste all of `supabase/seed.sql` → **Run**.
@@ -126,14 +128,46 @@ It renders at the bottom of the **Marketing** page.
 
 ---
 
+## Integrations Agent (the 16th agent)
+
+Lives on the **Integrations** page. It manages every plugin, MCP server, API
+and webhook the agency uses — and it cannot connect any of them by itself.
+
+**How connecting works:**
+
+1. You (or the agent) hit **Request connection** on an integration
+2. That raises an approval in your queue naming the exact scopes, the env var
+   required, and the blast radius if the credential leaks
+3. You approve → the connection goes live. You reject → it returns to the
+   catalog, nothing changes
+
+**Credentials never touch the database or an agent's context.** Each
+integration stores only the *name* of the environment variable that should
+hold its credential (e.g. `SLACK_BOT_TOKEN`). You set the real value in
+Vercel; the app reads it from the environment at runtime. The page shows a
+green "present" / amber "not set in environment" indicator per integration so
+you can see what's missing without exposing anything.
+
+If you approve a connection whose env var isn't set yet, it won't be marked
+live — it flips to "Needs attention" and tells you which variable to add.
+Add it in Vercel, redeploy, then re-approve.
+
+Disconnecting never needs approval — reducing access is always allowed.
+
+The catalog ships with 12 entries (Gmail, Calendar, Slack, Notion, Airtable,
+GitHub, WhatsApp Business, Razorpay, Resend, n8n, Cal.com, Google Analytics),
+all starting disconnected. Add more by inserting rows into `integrations`.
+
+---
+
 ## How it fits together
 
 ```
 CEO ──approves──▶ /api/approvals ──┬─▶ finance    → Razorpay payment link + Resend email
-                                   ├─▶ technology → triggers an n8n workflow
+                                   ├─▶ technology → n8n workflow, or activates an integration
                                    └─▶ ops/mktg   → queued for the owning agent
 
-15 agents (Claude) ──raise──▶ approvals queue
+16 agents (Claude) ──raise──▶ approvals queue
 Razorpay ──webhook──▶ invoice marked paid
 n8n      ──webhook──▶ tasks logged / leads captured
 ```

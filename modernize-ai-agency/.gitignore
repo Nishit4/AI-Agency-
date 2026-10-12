@@ -1,0 +1,26 @@
+# Dependencies and build output
+node_modules/
+mcp_bridge/dist/
+
+# Spec cache (client source analysis — never commit)
+.spec_cache/
+
+# Outreach data (personal data — never commit)
+outreach_data/
+
+# Test and gate artifacts
+*.out
+cover.out
+coverage/
+parity.json
+replay_report.json
+.gate/
+
+# Local environment
+.env
+.env.*
+*.local.json
+.DS_Store
+
+# Compiled service binaries
+templates/target_service_boilerplate/late-fee-service

@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp_bridge/package-lock.json
+      - run: make bridge
+
+  go:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ["1.22", "stable"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - run: make harness
+      - run: make service
+      - name: govulncheck
+        if: matrix.go-version == 'stable'
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          (cd templates && "$(go env GOPATH)/bin/govulncheck" ./...)
+          (cd templates/target_service_boilerplate && "$(go env GOPATH)/bin/govulncheck" ./...)

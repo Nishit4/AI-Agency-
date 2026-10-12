@@ -1,0 +1,164 @@
+# LegacyModern AI — delivery pod resourcing and model token allocation.
+#
+# Read by: agents/05_delivery_pod_manager.md (budget + burndown), agents/03 and 04 (per-work-order
+# budgets), and humans planning capacity. All money is USD. Token rates are USD per 1M tokens.
+#
+# Business model: ten enterprise accounts x $100,000/month retainer = $1,000,000 MRR.
+# One dedicated pod per account. Each pod's model spend is capped at $6,500/month.
+
+version: 1
+
+agency:
+  name: LegacyModern AI
+  mrr_target_usd: 1000000
+  target_accounts: 10
+  retainer_fee_usd_per_month: 100000
+  pilot_fee_usd: 50000
+  pilot_length_days: 14
+  pilot_max_loc: 50000
+  target_gross_margin_pct: 65
+
+sprint:
+  length_days: 14
+  start_weekday: Monday
+  ceremonies:
+    - { name: sprint_planning, day: 1, duration_minutes: 90, owner: pod_lead }
+    - { name: daily_async_standup, day: daily, duration_minutes: 0, owner: 05_delivery_pod_manager }
+    - { name: client_status_call, day: 5, duration_minutes: 30, owner: pod_lead }
+    - { name: mid_sprint_budget_review, day: 7, duration_minutes: 20, owner: 05_delivery_pod_manager }
+    - { name: client_status_call, day: 10, duration_minutes: 30, owner: pod_lead }
+    - { name: milestone_signoff_review, day: 13, duration_minutes: 60, owner: pod_lead }
+    - { name: retrospective, day: 14, duration_minutes: 45, owner: pod_lead }
+  burndown:
+    unit: story_points
+    points_per_work_order:
+      standard: 5    # <= 5,000 legacy LOC, <= 8 business rules
+      complex: 13    # <= 15,000 legacy LOC or shared global state / external dependencies
+      epic: 21       # must be split before it enters a sprint
+    at_risk_threshold_pct_behind_ideal: 15
+    off_track_threshold_pct_behind_ideal: 30
+
+work_orders:
+  sla_hours:
+    standard: 72      # verified work order -> PR approved by the parity gatekeeper
+    complex: 120
+  max_concurrent_per_pod: 3
+  acceptance:
+    parity_pass_rate: 1.0
+    min_branch_coverage: 0.90
+    max_p99_latency_ms: 250
+    required_checks: [format, lint, vet, build, unit, characterization, race, vuln, lineage]
+
+token_budget:
+  monthly_ceiling_usd_per_pod: 6500
+  currency: USD
+  # Share of the monthly ceiling reserved for each agent role. Must sum to 100.
+  allocation_pct:
+    01_gemini_cognitive_ingest: 8
+    02_mcp_spec_publisher: 7
+    03_claude_code_transpiler: 55
+    04_automated_parity_gatekeeper: 15
+    05_delivery_pod_manager: 3
+    reserve: 12
+  # Planned spend per work order; the pod manager flags any work order at 1.5x plan.
+  per_work_order_plan_usd:
+    01_gemini_cognitive_ingest: 40
+    02_mcp_spec_publisher: 35
+    03_claude_code_transpiler: 300
+    04_automated_parity_gatekeeper: 80
+  planned_work_orders_per_month: 12
+  alert_thresholds_pct: [50, 75, 90, 100]
+  actions:
+    "50": notify_pod_lead
+    "75": require_effort_review    # transpiler drops from high to medium effort on non-critical work orders
+    "90": freeze_new_work_orders   # only in-flight work orders continue; reserve is unlocked by pod lead
+    "100": hard_stop               # API keys for the pod are rotated to a zero-quota key until next cycle
+  reconciliation:
+    source_of_truth: provider_invoices   # Anthropic Console usage + Google Cloud billing export
+    cadence: weekly
+    max_tracking_drift_pct: 5
+
+models:
+  rates_verified_on: "2026-10-12"
+  catalog:
+    claude-opus-5-5:
+      provider: anthropic
+      input: 4.00
+      output: 20.00
+      cache_read: 0.20
+      cache_write_5m: 5.00
+      context_window_tokens: 1000000
+      notes: "Default Claude Code model. Thinking cannot be disabled; control cost with effort (default medium)."
+    claude-sonnet-5-5:
+      provider: anthropic
+      input: 2.00
+      output: 10.00
+      cache_read: 0.20
+      cache_write_5m: 2.50
+      context_window_tokens: 1000000
+    claude-haiku-5-5:
+      provider: anthropic
+      input: 0.10
+      output: 0.50
+      input_over_100k: 0.50
+      output_over_100k: 2.50
+      context_window_tokens: 1000000
+    gemini-2.5-pro:
+      provider: google
+      input_up_to_200k: 1.25
+      input_over_200k: 2.50
+      output_up_to_200k: 10.00
+      output_over_200k: 15.00
+      context_window_tokens: 1048576
+      notes: "Planning rates; reconcile against the Google Cloud billing export every week and update this block."
+  assignment:
+    01_gemini_cognitive_ingest: { model: gemini-2.5-pro, temperature: 0 }
+    02_mcp_spec_publisher: { model: claude-sonnet-5-5, effort: high }
+    03_claude_code_transpiler: { model: claude-opus-5-5, effort: high }
+    04_automated_parity_gatekeeper: { model: claude-sonnet-5-5, effort: high }
+    05_delivery_pod_manager: { model: claude-haiku-5-5, effort: medium }
+    06_daily_client_outreach: { model: claude-sonnet-5-5, effort: medium, budget_scope: agency_overhead }
+
+pod_template:
+  humans:
+    - { role: pod_lead, fte: 0.5, responsibilities: [client relationship, sprint planning, escalations, sign-off] }
+    - { role: senior_modernization_engineer, fte: 2.0, responsibilities: [agent supervision, code review, legacy SME liaison] }
+    - { role: parity_qa_engineer, fte: 0.5, responsibilities: [replay datasets, dual-engine harness, acceptance evidence] }
+  agents:
+    - 01_gemini_cognitive_ingest
+    - 02_mcp_spec_publisher
+    - 03_claude_code_transpiler
+    - 04_automated_parity_gatekeeper
+    - 05_delivery_pod_manager
+  monthly_cost_plan_usd:
+    people: 26500
+    model_tokens: 6500
+    infrastructure: 1500     # CI runners, replay storage, observability
+    tooling_and_insurance: 500
+    total: 35000
+  monthly_revenue_usd: 100000
+
+pods:
+  - { id: pod-alpha, status: staffed, client_account: null, start_date: null }
+  - { id: pod-bravo, status: staffed, client_account: null, start_date: null }
+  - { id: pod-charlie, status: bench, client_account: null, start_date: null }
+  - { id: pod-delta, status: bench, client_account: null, start_date: null }
+  - { id: pod-echo, status: bench, client_account: null, start_date: null }
+  - { id: pod-foxtrot, status: bench, client_account: null, start_date: null }
+  - { id: pod-golf, status: bench, client_account: null, start_date: null }
+  - { id: pod-hotel, status: bench, client_account: null, start_date: null }
+  - { id: pod-india, status: bench, client_account: null, start_date: null }
+  - { id: pod-juliet, status: bench, client_account: null, start_date: null }
+
+hiring_triggers:
+  # A bench pod is staffed (humans hired/assigned) when signed pipeline reaches these levels.
+  staff_next_pod_when:
+    signed_pilots_in_flight: 2
+    or_retainers_signed_without_pod: 1
+  lead_time_days: 30
+
+escalation:
+  sla_breach_risk: [pod_lead, delivery_director]
+  budget_threshold_90: [pod_lead, delivery_director, finance]
+  parity_failure_after_two_cycles: [pod_lead, legacy_sme, client_technical_owner]
+  security_or_data_incident: [pod_lead, security_officer, client_ciso]

@@ -1,0 +1,157 @@
+# LegacyModern AI — daily client outreach configuration.
+#
+# Read by agents/06_daily_client_outreach.md, which runs every business morning as a
+# Claude Cowork scheduled task (or a Claude Code routine). Messaging comes from
+# sales_and_commercial/cto_outbound_pitch.md.
+#
+# Safety default: mode = draft_for_approval. The agent writes Gmail drafts and a review
+# queue; a human sends. Switch to auto_send_followups only after two weeks of approved
+# drafts with zero edits to the agent's copy.
+
+version: 1
+
+schedule:
+  timezone: America/New_York
+  run_at: "08:20"
+  business_days: [MON, TUE, WED, THU, FRI]
+  skip_dates:
+    - "2026-11-26"   # US Thanksgiving
+    - "2026-12-25"
+    - "2027-01-01"
+  end_of_day_summary_at: "17:15"
+
+mode: draft_for_approval     # draft_for_approval | auto_send_followups
+daily_caps:
+  new_prospects: 15          # first-touch drafts per day
+  follow_ups: 30             # touch 2 / touch 3 drafts per day
+  reply_handling: 50         # replies classified and answered per day
+  max_per_company_per_week: 2
+
+send_windows:
+  # Recipient-local time. Drafts are labelled with the recommended send slot.
+  preferred_days: [TUE, WED, THU]
+  start: "07:30"
+  end: "10:30"
+
+cadence:
+  # Days after touch 1. Touch 3 is the break-up email.
+  touch_1: 0
+  touch_2: 4
+  touch_3: 9
+  stop_on: [reply, bounce, unsubscribe, meeting_booked, out_of_office_over_14_days]
+  recycle_after_days: 120
+
+ideal_customer_profile:
+  industries:
+    - retail and commercial banking
+    - insurance (P&C, life, reinsurance)
+    - payments and card processing
+    - federal, state and local government
+    - airlines and travel distribution
+    - healthcare payers
+    - large retail and logistics
+  company_size:
+    min_annual_revenue_usd: 1000000000
+    min_employees: 2000
+  geography: [United States, Canada, United Kingdom, Ireland, Germany, Netherlands, Nordics, Australia, Singapore, India]
+  technology_signals:
+    strong:
+      - job postings mentioning COBOL, CICS, IMS, JCL, DB2 z/OS, PL/I, Natural/Adabas or RPG
+      - open roles for "mainframe modernization" or "core banking transformation"
+      - public statements about exiting a data center or mainframe contract renewal
+      - Oracle Forms / PL/SQL estates with an announced cloud migration
+    supporting:
+      - recent CIO/CTO appointment (first 180 days)
+      - regulator findings on technology resilience or operational risk
+      - announced cloud partnership (AWS, Azure, Google Cloud) without named modernization partner
+  exclude:
+    - current clients and anyone in an active pilot
+    - companies with a publicly announced modernization partner for the same estate in the last 12 months
+    - government entities that require a formal RFP channel (route to the RFP tracker instead)
+
+personas:
+  primary:
+    titles: [Chief Information Officer, Chief Technology Officer, CIO, CTO]
+    sequence: A
+  secondary:
+    titles: [VP Engineering, SVP Technology, Head of Core Systems, Head of Mainframe, Director of Application Modernization, Chief Architect]
+    sequence: B
+  never_contact: [students, recruiters, vendors' sales staff, personal email addresses]
+
+sources:
+  # Prospect discovery, in priority order. The agent uses whichever connectors are enabled.
+  - connector: vibe_prospecting      # Explorium-backed company + contact search
+  - connector: apollo
+  - connector: linkedin_sales_navigator_export
+    path: outreach_data/imports/
+  - connector: manual_csv
+    path: outreach_data/imports/manual_prospects.csv
+
+tracker:
+  # Local, git-ignored. The agent creates the files with these headers if missing.
+  path: outreach_data/prospects.csv
+  columns:
+    - prospect_id
+    - company
+    - domain
+    - industry
+    - full_name
+    - title
+    - persona
+    - email
+    - email_verified
+    - linkedin_url
+    - trigger_event
+    - trigger_source_url
+    - sequence
+    - stage            # new | touch_1_drafted | touch_1_sent | touch_2_sent | touch_3_sent | replied | meeting_booked | nurture | disqualified | unsubscribed
+    - last_touch_date
+    - next_touch_date
+    - reply_classification
+    - owner
+    - notes
+  suppression_list: outreach_data/suppression.csv
+  activity_log: outreach_data/activity_log.jsonl
+  daily_reports_dir: outreach_data/reports/
+
+sender:
+  # The sending identity is the connected Gmail / Google Workspace account. Name, title and
+  # phone come from environment variables so no personal data is committed to git.
+  name_env: OUTREACH_SENDER_NAME
+  title_env: OUTREACH_SENDER_TITLE
+  phone_env: OUTREACH_SENDER_PHONE
+  calendar_link_env: OUTREACH_CALENDAR_LINK
+  company: LegacyModern AI
+  postal_address_env: OUTREACH_POSTAL_ADDRESS   # required in every commercial email (CAN-SPAM)
+
+compliance:
+  include_opt_out_line: true
+  opt_out_text: "If this isn't relevant, reply \"no thanks\" and I won't contact you again."
+  honor_opt_out_within_hours: 24
+  lawful_basis_eu_uk: legitimate_interest
+  legitimate_interest_note: "B2B outreach to a role-based work address about modernizing systems the recipient is responsible for."
+  regions_requiring_opt_in: []          # add country codes here if counsel advises opt-in only
+  no_purchased_lists_without_provenance: true
+  record_retention_days: 730
+
+quality_bar:
+  personalization_required: true        # every touch 1 must cite a specific, verifiable trigger
+  max_words_touch_1: 120
+  max_words_follow_up: 80
+  banned_phrases:
+    - "I hope this email finds you well"
+    - "just circling back"
+    - "quick question"
+    - "synergy"
+    - "revolutionary"
+  claims_policy: "Only claims backed by the contract terms (parity guarantee, SLAs) or a client-approved reference. No invented case studies, logos or statistics."
+
+reporting:
+  kpis:
+    reply_rate_target_pct: 8
+    positive_reply_rate_target_pct: 3
+    meetings_per_week_target: 4
+    pilots_per_quarter_target: 3
+  notify:
+    channel: email                      # email | slack
+    recipients_env: OUTREACH_REPORT_RECIPIENTS

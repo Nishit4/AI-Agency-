@@ -1,0 +1,1 @@
+../../agents/02_mcp_spec_publisher.md

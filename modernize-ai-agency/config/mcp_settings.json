@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "legacymodern-spec-bridge": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${LEGACYMODERN_HOME:-.}/mcp_bridge/dist/index.js"],
+      "env": {
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}",
+        "GEMINI_MODEL": "${GEMINI_MODEL:-gemini-2.5-pro}",
+        "GEMINI_MAX_INPUT_TOKENS": "${GEMINI_MAX_INPUT_TOKENS:-900000}",
+        "GEMINI_MAX_ATTEMPTS": "${GEMINI_MAX_ATTEMPTS:-2}",
+        "SPEC_CACHE_DIR": "${SPEC_CACHE_DIR:-.spec_cache}",
+        "INGEST_PROMPT_PATH": "${LEGACYMODERN_HOME:-.}/agents/01_gemini_cognitive_ingest.md",
+        "MIN_RULE_CONFIDENCE": "${MIN_RULE_CONFIDENCE:-0.8}",
+        "WORK_ORDER_SLA_HOURS": "${WORK_ORDER_SLA_HOURS:-72}",
+        "MAX_BUNDLE_BYTES": "${MAX_BUNDLE_BYTES:-3500000}",
+        "MAX_FILE_BYTES": "${MAX_FILE_BYTES:-1500000}"
+      }
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}

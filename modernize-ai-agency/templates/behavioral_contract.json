@@ -1,0 +1,1462 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legacymodern.ai/schemas/behavioral-contract/1.x.json",
+  "title": "LegacyModern AI Behavioral Contract",
+  "description": "Business rules and executable input/output assertions extracted from a legacy module. Produced by the Gemini ingest agent, verified by the spec publisher, consumed by templates/characterization_test.go. Numeric parity rules: JSON numbers and decimal strings (e.g. \"5.01\") are compared as exact decimals; the effective tolerance is the assertion's tolerance or defaultTolerance; actual values may not carry more decimal places than tolerance.scale. Mirrors BehavioralContractSchema in mcp_bridge/src/types.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "moduleId",
+    "sourceSystem",
+    "extractedBy",
+    "verifiedBy",
+    "defaultTolerance",
+    "businessRules",
+    "assertions"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version; minor bumps when assertions change, patch when only verification metadata changes"
+    },
+    "moduleId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "description": "Also names the modernize/<module-id> branch"
+    },
+    "sourceSystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "dialect",
+        "repository",
+        "commitSha",
+        "files"
+      ],
+      "properties": {
+        "language": {
+          "enum": [
+            "COBOL",
+            "PL/I",
+            "PL/SQL",
+            "JCL",
+            "Java",
+            "RPG",
+            "Natural",
+            "Assembler",
+            "CICS-BMS",
+            "SQL",
+            "Other"
+          ]
+        },
+        "dialect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commitSha": {
+          "type": "string",
+          "minLength": 7
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sourceFile"
+          }
+        }
+      }
+    },
+    "extractedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent",
+        "model",
+        "extractedAt"
+      ],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extractedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "verifiedBy": {
+      "description": "null until the spec publisher signs off; characterization tests must refuse unverified contracts in CI",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "agent",
+            "verifiedAt",
+            "findings"
+          ],
+          "properties": {
+            "agent": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "defaultTolerance": {
+      "$ref": "#/$defs/tolerance"
+    },
+    "businessRules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/businessRule"
+      }
+    },
+    "assertions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/assertion"
+      }
+    }
+  },
+  "$defs": {
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "startLine",
+        "endLine"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path relative to the ingested subsystem root"
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Paragraph, procedure, field or method name"
+        }
+      }
+    },
+    "sourceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "lineCount"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lineCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "tolerance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "absolute",
+        "relative",
+        "roundingMode",
+        "scale"
+      ],
+      "properties": {
+        "absolute": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum |actual - expected|. 0 = exact"
+        },
+        "relative": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum |actual - expected| / |expected|. 0 disables"
+        },
+        "roundingMode": {
+          "enum": [
+            "HALF_UP",
+            "HALF_EVEN",
+            "TRUNCATE",
+            "CEILING",
+            "FLOOR"
+          ]
+        },
+        "scale": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Decimal places carried by the legacy field (2 for PIC S9(9)V99)"
+        }
+      }
+    },
+    "businessRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId",
+        "description",
+        "lineage",
+        "assertionIds"
+      ],
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "pattern": "^BR-[0-9]{3,}$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lineage": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/lineage"
+          }
+        },
+        "assertionIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^A-[0-9]{3,}$"
+          }
+        }
+      }
+    },
+    "stateTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity",
+        "field",
+        "before",
+        "after"
+      ],
+      "properties": {
+        "entity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before": {},
+        "after": {}
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "kind",
+        "value",
+        "rationale"
+      ],
+      "properties": {
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "min",
+            "max",
+            "min_minus_one",
+            "max_plus_one",
+            "zero",
+            "empty",
+            "null",
+            "overflow",
+            "precision_edge"
+          ]
+        },
+        "value": {},
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assertionId",
+        "ruleId",
+        "operation",
+        "category",
+        "description",
+        "inputs",
+        "expected",
+        "lineage",
+        "provenance"
+      ],
+      "properties": {
+        "assertionId": {
+          "type": "string",
+          "pattern": "^A-[0-9]{3,}$"
+        },
+        "ruleId": {
+          "type": "string",
+          "pattern": "^BR-[0-9]{3,}$"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the modern operation registered in the characterization harness"
+        },
+        "category": {
+          "enum": [
+            "nominal",
+            "boundary",
+            "error",
+            "state_transition",
+            "regression"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Input vector keyed by modern field name"
+        },
+        "initialState": {
+          "type": "object",
+          "description": "Entity state before the call, e.g. {\"account\": {\"status\": \"CURRENT\"}}",
+          "default": {}
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "outputs",
+            "error"
+          ],
+          "properties": {
+            "outputs": {
+              "type": "object",
+              "description": "Exact output map; extra or missing keys fail parity. Empty when error is set"
+            },
+            "error": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "code"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "legacyReturnCode": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "stateTransitions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/stateTransition"
+              },
+              "default": [],
+              "description": "Every state change the call must make; any undeclared change fails parity"
+            }
+          }
+        },
+        "tolerance": {
+          "$ref": "#/$defs/tolerance"
+        },
+        "stringComparison": {
+          "enum": [
+            "exact",
+            "rtrim"
+          ],
+          "default": "exact",
+          "description": "rtrim mirrors COBOL PIC X space padding"
+        },
+        "boundary": {
+          "$ref": "#/$defs/boundary"
+        },
+        "lineage": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/lineage"
+          }
+        },
+        "provenance": {
+          "enum": [
+            "synthesized",
+            "production_capture",
+            "client_supplied"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "category"
+            ],
+            "properties": {
+              "category": {
+                "const": "error"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "expected": {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "category"
+            ],
+            "properties": {
+              "category": {
+                "const": "boundary"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "boundary"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "contractVersion": "1.1.0",
+      "moduleId": "LNFEE010",
+      "sourceSystem": {
+        "language": "COBOL",
+        "dialect": "IBM Enterprise COBOL for z/OS 6.3",
+        "repository": "examples/legacy/LNFEE010",
+        "commitSha": "4f2c9e1b7a",
+        "files": [
+          {
+            "path": "copybooks/LNFEEREC.cpy",
+            "sha256": "5543d129801345f6bf4c73516271f9efc5dfb927260ca900dd9f242d434ce0ba",
+            "lineCount": 24
+          },
+          {
+            "path": "src/LNFEE010.cbl",
+            "sha256": "7d418b3e77eff30e6fe4b0f45de47d67d9b63796105aef5bd071456d669aee34",
+            "lineCount": 105
+          }
+        ]
+      },
+      "extractedBy": {
+        "agent": "01_gemini_cognitive_ingest",
+        "model": "gemini-2.5-pro",
+        "extractedAt": "2026-10-01T09:14:22.000Z"
+      },
+      "verifiedBy": {
+        "agent": "02_mcp_spec_publisher",
+        "verifiedAt": "2026-10-01T11:02:05.000Z",
+        "findings": [
+          "Added A-007 (rounding drives the fee-assessed flag) and A-014 (validation precedence) which the ingest pass omitted.",
+          "Confirmed COMPUTE ROUNDED default mode is NEAREST-AWAY-FROM-ZERO; balances are non-negative after validation so HALF_UP is equivalent."
+        ]
+      },
+      "defaultTolerance": {
+        "absolute": 0,
+        "relative": 0,
+        "roundingMode": "HALF_UP",
+        "scale": 2
+      },
+      "businessRules": [
+        {
+          "ruleId": "BR-001",
+          "description": "Late fee calculation: after a 15-day grace period, fee = 5% of outstanding balance rounded half-up to 2 decimals (COMPUTE ROUNDED), capped at 25.00.",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "assertionIds": [
+            "A-001",
+            "A-002",
+            "A-003",
+            "A-004",
+            "A-005",
+            "A-006",
+            "A-018"
+          ]
+        },
+        {
+          "ruleId": "BR-002",
+          "description": "Fee-assessed indicator: LN-FEE-ASSESSED is 'Y' only when the rounded fee is greater than zero.",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 73,
+              "endLine": 75,
+              "symbol": "2000-CALC-FEE"
+            }
+          ],
+          "assertionIds": [
+            "A-007",
+            "A-008"
+          ]
+        },
+        {
+          "ruleId": "BR-003",
+          "description": "Delinquency escalation: >=30 days -> DELINQUENT, >=90 days -> CHARGEOFF; status only escalates, never downgrades.",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 81,
+              "endLine": 105,
+              "symbol": "3000-ADVANCE-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 20,
+              "endLine": 21,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "assertionIds": [
+            "A-009",
+            "A-010",
+            "A-011",
+            "A-012"
+          ]
+        },
+        {
+          "ruleId": "BR-004",
+          "description": "Input validation, first failure wins: invalid status (RC 08), CLOSED account (RC 12), negative balance (RC 08), days past due > 999 (RC 08).",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 45,
+              "endLine": 59,
+              "symbol": "1000-VALIDATE"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 10,
+              "endLine": 18,
+              "symbol": "LN-ACCT-STATUS"
+            }
+          ],
+          "assertionIds": [
+            "A-013",
+            "A-014",
+            "A-015",
+            "A-016",
+            "A-017"
+          ]
+        }
+      ],
+      "assertions": [
+        {
+          "assertionId": "A-001",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "nominal",
+          "description": "Captured nightly-cycle record: 100.10 balance, 20 days past due; 5.005 rounds half-up to 5.01",
+          "inputs": {
+            "outstandingBalance": "100.10",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "5.01",
+              "feeAssessed": true,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "production_capture"
+        },
+        {
+          "assertionId": "A-002",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "Day 15 is the last day of the grace period: no fee",
+          "inputs": {
+            "outstandingBalance": "100.00",
+            "daysPastDue": 15
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "0.00",
+              "feeAssessed": false,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "daysPastDue",
+            "kind": "max",
+            "value": 15,
+            "rationale": "IF LN-DAYS-PAST-DUE > WS-GRACE-DAYS uses strict greater-than (line 65)"
+          }
+        },
+        {
+          "assertionId": "A-003",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "Day 16 is the first chargeable day",
+          "inputs": {
+            "outstandingBalance": "100.00",
+            "daysPastDue": 16
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "5.00",
+              "feeAssessed": true,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "daysPastDue",
+            "kind": "max_plus_one",
+            "value": 16,
+            "rationale": "First value past the grace boundary"
+          }
+        },
+        {
+          "assertionId": "A-004",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "500.00 balance produces exactly the 25.00 cap",
+          "inputs": {
+            "outstandingBalance": "500.00",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "25.00",
+              "feeAssessed": true,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "outstandingBalance",
+            "kind": "max",
+            "value": "500.00",
+            "rationale": "Largest balance whose raw fee does not exceed WS-FEE-CAP"
+          }
+        },
+        {
+          "assertionId": "A-005",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "500.20 balance yields raw fee 25.01 which is capped to 25.00",
+          "inputs": {
+            "outstandingBalance": "500.20",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "25.00",
+              "feeAssessed": true,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "outstandingBalance",
+            "kind": "max_plus_one",
+            "value": "500.20",
+            "rationale": "IF WS-RAW-FEE > WS-FEE-CAP (line 68)"
+          }
+        },
+        {
+          "assertionId": "A-006",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "0.10 balance: raw 0.005 rounds half-up to 0.01",
+          "inputs": {
+            "outstandingBalance": "0.10",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "0.01",
+              "feeAssessed": true,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "outstandingBalance",
+            "kind": "precision_edge",
+            "value": "0.10",
+            "rationale": "COMPUTE ROUNDED rounds away from zero at the half (line 66)"
+          }
+        },
+        {
+          "assertionId": "A-007",
+          "ruleId": "BR-002",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "0.09 balance: raw 0.0045 rounds to 0.00 so no fee is flagged",
+          "inputs": {
+            "outstandingBalance": "0.09",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "0.00",
+              "feeAssessed": false,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 73,
+              "endLine": 75,
+              "symbol": "2000-CALC-FEE"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "outstandingBalance",
+            "kind": "precision_edge",
+            "value": "0.09",
+            "rationale": "Fee-assessed flag depends on the rounded fee, not the raw product"
+          }
+        },
+        {
+          "assertionId": "A-008",
+          "ruleId": "BR-002",
+          "operation": "AssessLateFee",
+          "category": "nominal",
+          "description": "Zero balance past grace: fee 0.00 and flag stays N",
+          "inputs": {
+            "outstandingBalance": "0.00",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "0.00",
+              "feeAssessed": false,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 73,
+              "endLine": 75,
+              "symbol": "2000-CALC-FEE"
+            }
+          ],
+          "provenance": "synthesized"
+        },
+        {
+          "assertionId": "A-009",
+          "ruleId": "BR-003",
+          "operation": "AssessLateFee",
+          "category": "state_transition",
+          "description": "30 days past due escalates CURRENT to DELINQUENT",
+          "inputs": {
+            "outstandingBalance": "1000.00",
+            "daysPastDue": 30
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "25.00",
+              "feeAssessed": true,
+              "newStatus": "DELINQUENT"
+            },
+            "error": null,
+            "stateTransitions": [
+              {
+                "entity": "account",
+                "field": "status",
+                "before": "CURRENT",
+                "after": "DELINQUENT"
+              }
+            ]
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 81,
+              "endLine": 105,
+              "symbol": "3000-ADVANCE-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 20,
+              "endLine": 21,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized"
+        },
+        {
+          "assertionId": "A-010",
+          "ruleId": "BR-003",
+          "operation": "AssessLateFee",
+          "category": "state_transition",
+          "description": "90 days past due escalates DELINQUENT to CHARGEOFF",
+          "inputs": {
+            "outstandingBalance": "250.00",
+            "daysPastDue": 90
+          },
+          "initialState": {
+            "account": {
+              "status": "DELINQUENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "12.50",
+              "feeAssessed": true,
+              "newStatus": "CHARGEOFF "
+            },
+            "error": null,
+            "stateTransitions": [
+              {
+                "entity": "account",
+                "field": "status",
+                "before": "DELINQUENT",
+                "after": "CHARGEOFF"
+              }
+            ]
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 81,
+              "endLine": 105,
+              "symbol": "3000-ADVANCE-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 20,
+              "endLine": 21,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized"
+        },
+        {
+          "assertionId": "A-011",
+          "ruleId": "BR-003",
+          "operation": "AssessLateFee",
+          "category": "state_transition",
+          "description": "Status never downgrades: CHARGEOFF at 20 days stays CHARGEOFF",
+          "inputs": {
+            "outstandingBalance": "100.00",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CHARGEOFF"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "5.00",
+              "feeAssessed": true,
+              "newStatus": "CHARGEOFF "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 81,
+              "endLine": 105,
+              "symbol": "3000-ADVANCE-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 20,
+              "endLine": 21,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized"
+        },
+        {
+          "assertionId": "A-012",
+          "ruleId": "BR-003",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "29 days past due is one day short of delinquency",
+          "inputs": {
+            "outstandingBalance": "40.00",
+            "daysPastDue": 29
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "2.00",
+              "feeAssessed": true,
+              "newStatus": "CURRENT   "
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 81,
+              "endLine": 105,
+              "symbol": "3000-ADVANCE-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 20,
+              "endLine": 21,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "daysPastDue",
+            "kind": "min_minus_one",
+            "value": 29,
+            "rationale": "WHEN LN-DAYS-PAST-DUE >= WS-DELINQ-DAYS (line 85)"
+          }
+        },
+        {
+          "assertionId": "A-013",
+          "ruleId": "BR-004",
+          "operation": "AssessLateFee",
+          "category": "error",
+          "description": "Status outside the 88-level LN-STATUS-VALID set is rejected with RC 08",
+          "inputs": {
+            "outstandingBalance": "100.00",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "FROZEN"
+            }
+          },
+          "expected": {
+            "outputs": {},
+            "error": {
+              "code": "INVALID_STATUS",
+              "legacyReturnCode": "08"
+            },
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 45,
+              "endLine": 59,
+              "symbol": "1000-VALIDATE"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 10,
+              "endLine": 18,
+              "symbol": "LN-ACCT-STATUS"
+            }
+          ],
+          "provenance": "synthesized"
+        },
+        {
+          "assertionId": "A-014",
+          "ruleId": "BR-004",
+          "operation": "AssessLateFee",
+          "category": "error",
+          "description": "CLOSED is checked before balance sign: closed account with negative balance returns RC 12",
+          "inputs": {
+            "outstandingBalance": "-5.00",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CLOSED"
+            }
+          },
+          "expected": {
+            "outputs": {},
+            "error": {
+              "code": "ACCOUNT_CLOSED",
+              "legacyReturnCode": "12"
+            },
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 45,
+              "endLine": 59,
+              "symbol": "1000-VALIDATE"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 10,
+              "endLine": 18,
+              "symbol": "LN-ACCT-STATUS"
+            }
+          ],
+          "provenance": "synthesized"
+        },
+        {
+          "assertionId": "A-015",
+          "ruleId": "BR-004",
+          "operation": "AssessLateFee",
+          "category": "error",
+          "description": "Negative balance is rejected with RC 08",
+          "inputs": {
+            "outstandingBalance": "-0.01",
+            "daysPastDue": 20
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {},
+            "error": {
+              "code": "NEGATIVE_BALANCE",
+              "legacyReturnCode": "08"
+            },
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 45,
+              "endLine": 59,
+              "symbol": "1000-VALIDATE"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 10,
+              "endLine": 18,
+              "symbol": "LN-ACCT-STATUS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "outstandingBalance",
+            "kind": "min_minus_one",
+            "value": "-0.01",
+            "rationale": "WHEN LN-OUTSTANDING-BAL < ZERO (line 53)"
+          }
+        },
+        {
+          "assertionId": "A-016",
+          "ruleId": "BR-004",
+          "operation": "AssessLateFee",
+          "category": "error",
+          "description": "Days past due above 999 overflow the business range and are rejected",
+          "inputs": {
+            "outstandingBalance": "100.00",
+            "daysPastDue": 1000
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {},
+            "error": {
+              "code": "INVALID_DAYS_PAST_DUE",
+              "legacyReturnCode": "08"
+            },
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 45,
+              "endLine": 59,
+              "symbol": "1000-VALIDATE"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 10,
+              "endLine": 18,
+              "symbol": "LN-ACCT-STATUS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "daysPastDue",
+            "kind": "max_plus_one",
+            "value": 1000,
+            "rationale": "WHEN LN-DAYS-PAST-DUE > WS-MAX-DAYS (line 56)"
+          }
+        },
+        {
+          "assertionId": "A-017",
+          "ruleId": "BR-004",
+          "operation": "AssessLateFee",
+          "category": "boundary",
+          "description": "999 days is the largest accepted value and escalates straight to CHARGEOFF",
+          "inputs": {
+            "outstandingBalance": "100.00",
+            "daysPastDue": 999
+          },
+          "initialState": {
+            "account": {
+              "status": "CURRENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "5.00",
+              "feeAssessed": true,
+              "newStatus": "CHARGEOFF "
+            },
+            "error": null,
+            "stateTransitions": [
+              {
+                "entity": "account",
+                "field": "status",
+                "before": "CURRENT",
+                "after": "CHARGEOFF"
+              }
+            ]
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 45,
+              "endLine": 59,
+              "symbol": "1000-VALIDATE"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 10,
+              "endLine": 18,
+              "symbol": "LN-ACCT-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 81,
+              "endLine": 105,
+              "symbol": "3000-ADVANCE-STATUS"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 20,
+              "endLine": 21,
+              "symbol": "WS-CONSTANTS"
+            }
+          ],
+          "provenance": "synthesized",
+          "boundary": {
+            "field": "daysPastDue",
+            "kind": "max",
+            "value": 999,
+            "rationale": "WS-MAX-DAYS VALUE 999 (line 16)"
+          }
+        },
+        {
+          "assertionId": "A-018",
+          "ruleId": "BR-001",
+          "operation": "AssessLateFee",
+          "category": "regression",
+          "description": "Captured record at the PIC S9(9)V99 ceiling: fee capped, status unchanged",
+          "inputs": {
+            "outstandingBalance": "999999999.99",
+            "daysPastDue": 61
+          },
+          "initialState": {
+            "account": {
+              "status": "DELINQUENT"
+            }
+          },
+          "expected": {
+            "outputs": {
+              "lateFee": "25.00",
+              "feeAssessed": true,
+              "newStatus": "DELINQUENT"
+            },
+            "error": null,
+            "stateTransitions": []
+          },
+          "stringComparison": "rtrim",
+          "lineage": [
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 64,
+              "endLine": 76,
+              "symbol": "2000-CALC-FEE"
+            },
+            {
+              "file": "src/LNFEE010.cbl",
+              "startLine": 15,
+              "endLine": 19,
+              "symbol": "WS-CONSTANTS"
+            },
+            {
+              "file": "copybooks/LNFEEREC.cpy",
+              "startLine": 8,
+              "endLine": 8,
+              "symbol": "LN-OUTSTANDING-BAL"
+            }
+          ],
+          "provenance": "production_capture"
+        }
+      ]
+    }
+  ]
+}

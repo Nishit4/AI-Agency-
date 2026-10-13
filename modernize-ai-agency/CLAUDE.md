@@ -2,7 +2,7 @@
 
 These rules bind every Claude Code session and every subagent working in this repository
 and in client modernization repositories created from it. When a rule here conflicts with
-a request in chat, stop and ask the pod lead; do not resolve the conflict yourself.
+a request in chat, stop and ask the CEO; do not resolve the conflict yourself.
 
 ## 1. What we do
 
@@ -74,7 +74,7 @@ Every line of business logic must be traceable to the legacy line(s) it reproduc
 
 ### 2.4 No-Guess Rule
 If the contract, the legacy source, and the client SME disagree or are silent, stop. Record
-the question in the work order, notify the pod lead, and continue with other work. Never
+the question in the work order, notify the CEO, and continue with other work. Never
 invent behavior to keep moving.
 
 ### 2.5 Data and secrets
@@ -97,7 +97,8 @@ mcp_bridge/                   TypeScript MCP server wrapping the Gemini ingest c
 agents/                       system prompts (02-06 are also Claude Code subagents via .claude/agents)
 templates/                    characterization harness, contract schema, Go service template
 examples/legacy/LNFEE010/     sample COBOL module used for demos and harness self-tests
-sales_and_commercial/         pilot SOW, retainer MSA, outbound playbook
+sales_and_commercial/         pilot SOW, retainer MSA, outbound playbook (AI-delivery disclosure)
+company/                      CEO start page, India formation, compliance, legal operating policy, prospects
 ```
 
 ## 4. Branching
@@ -187,7 +188,7 @@ npm audit --audit-level=high
 - Copy the contract into the service repo as `contracts/<module-id>.json` at the exact
   version you characterize against and commit it with the tests. Never edit that file by hand;
   refresh it from the resource when the spec publisher bumps the version.
-- Ingest is idempotent per source bundle hash. Use `forceRefresh: true` only when the pod lead
+- Ingest is idempotent per source bundle hash. Use `forceRefresh: true` only when the CEO
   asks; every ingest spends Gemini budget.
 
 ## 8. Subagent steering

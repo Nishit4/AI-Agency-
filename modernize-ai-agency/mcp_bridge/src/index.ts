@@ -16,7 +16,7 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { GeminiIngestClient, IngestValidationError } from "./gemini_client.js";
+import { GeminiIngestClient, IngestValidationError, addBusinessDays } from "./gemini_client.js";
 import {
   BehavioralAssertionSchema,
   BehavioralContractSchema,
@@ -308,7 +308,7 @@ export function createServer(client: GeminiIngestClient = new GeminiIngestClient
           assertionCount: contract.assertions.length,
           status: "spec_published",
           // SLA clock starts at publication of the verified contract, not at ingest.
-          dueAt: new Date(publishedAt.getTime() + entry.workOrder.slaHours * 3_600_000).toISOString(),
+          dueAt: addBusinessDays(publishedAt, entry.workOrder.slaBusinessDays).toISOString(),
         });
         const updated: SpecCacheEntry = { ...entry, contract, workOrder, reviewFlags: [] };
         const cachePath = await client.cache.update(updated);

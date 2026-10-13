@@ -70,7 +70,7 @@ export interface GeminiClientConfig {
   maxFileBytes: number;
   maxAttempts: number;
   minRuleConfidence: number;
-  defaultSlaHours: number;
+  defaultSlaBusinessDays: number;
 }
 
 export function loadConfigFromEnv(): GeminiClientConfig {
@@ -87,7 +87,7 @@ export function loadConfigFromEnv(): GeminiClientConfig {
     maxFileBytes: intFromEnv("MAX_FILE_BYTES", 1_500_000),
     maxAttempts: intFromEnv("GEMINI_MAX_ATTEMPTS", 2),
     minRuleConfidence: floatFromEnv("MIN_RULE_CONFIDENCE", 0.8),
-    defaultSlaHours: intFromEnv("WORK_ORDER_SLA_HOURS", 72),
+    defaultSlaBusinessDays: intFromEnv("WORK_ORDER_SLA_BUSINESS_DAYS", 5),
   };
 }
 
@@ -489,11 +489,28 @@ export function assembleContract(
   return BehavioralContractSchema.parse(contract);
 }
 
+const IST_OFFSET_MS = 5.5 * 3_600_000;
+
+/**
+ * Adds Provider Business Days (Monday-Friday in India Standard Time) to an instant. Public
+ * holidays are not modelled; the pod manager records holiday pauses as documented SLA pauses.
+ */
+export function addBusinessDays(start: Date, businessDays: number): Date {
+  let cursor = start.getTime();
+  let remaining = businessDays;
+  while (remaining > 0) {
+    cursor += 86_400_000;
+    const istWeekday = new Date(cursor + IST_OFFSET_MS).getUTCDay();
+    if (istWeekday !== 0 && istWeekday !== 6) remaining -= 1;
+  }
+  return new Date(cursor);
+}
+
 export function assembleWorkOrder(
   options: IngestOptions,
   bundle: SourceBundle,
   contract: BehavioralContract,
-  slaHours: number,
+  slaBusinessDays: number,
   now: Date = new Date(),
 ): ModernizationWorkOrder {
   const sequence = (Number.parseInt(bundle.bundleHash.slice(0, 8), 16) % 1_000_000).toString().padStart(6, "0");
@@ -508,11 +525,11 @@ export function assembleWorkOrder(
     contractVersion: contract.contractVersion,
     assertionCount: contract.assertions.length,
     acceptanceCriteria: { parityPassRate: 1, minBranchCoverage: 0.9, maxP99LatencyMs: 250 },
-    slaHours,
+    slaBusinessDays,
     // The SLA clock starts when the spec publisher verifies the contract (publish_verified_contract).
     status: "draft",
     createdAt: now.toISOString(),
-    dueAt: new Date(now.getTime() + slaHours * 3_600_000).toISOString(),
+    dueAt: addBusinessDays(now, slaBusinessDays).toISOString(),
   };
   return ModernizationWorkOrderSchema.parse(workOrder);
 }
@@ -831,7 +848,7 @@ export class GeminiIngestClient {
           })),
         };
         const contract = assembleContract(options, bundle, analysis, parsed.assertions, this.config.model);
-        const workOrder = assembleWorkOrder(options, bundle, contract, this.config.defaultSlaHours);
+        const workOrder = assembleWorkOrder(options, bundle, contract, this.config.defaultSlaBusinessDays);
         const entry: SpecCacheEntry = {
           moduleId: options.moduleId,
           bundleHash: bundle.bundleHash,

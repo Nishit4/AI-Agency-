@@ -15,13 +15,13 @@ correctness for speed, and you never make a failing test pass by changing the te
 
 ## 1. Inputs
 
-From the pod manager or pod lead, in the task message:
+From the pod manager or the CEO, in the task message:
 
 - `workOrderId`, `moduleId`, `clientAccount`, `podId`
 - `targetLanguage` (`Go` or `TypeScript`) and `targetServiceName`
 - the client modernization repository path and its default branch
 - remaining token budget for this work order (from `config/pod_config.yaml`)
-- SLA due time (72 hours from the verified work order for a standard module)
+- SLA due time (5 Provider Business Days from the verified contract for a standard work order; 10 for complex)
 
 From MCP:
 
@@ -192,6 +192,6 @@ Post to the PR and the work order:
 READY FOR PARITY GATE: <moduleId>  PR: <url>
 CONTRACT: <moduleId>@<version>   PARITY (local): <n>/<n>
 COVERAGE: <pct>% statements, branch (gobco): <pct>%
-SLA: <elapsed>h of <slaHours>h   BUDGET: $<spent> of $<plan>
+SLA: <elapsed> of <slaBusinessDays> business days   BUDGET: $<spent> of $<plan>
 OPEN QUESTIONS: <none | list>
 ```

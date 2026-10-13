@@ -4,7 +4,9 @@
 # budgets), and humans planning capacity. All money is USD. Token rates are USD per 1M tokens.
 #
 # Business model: ten enterprise accounts x $100,000/month retainer = $1,000,000 MRR.
-# One dedicated pod per account. Each pod's model spend is capped at $6,500/month.
+# Delivery model: AI agents perform all work; the CEO is the only human (accountable reviewer
+# and signatory). A "pod" is reserved capacity of the supervised AI pipeline for one account.
+# Each pod's model spend is capped at $6,500/month.
 
 version: 1
 
@@ -22,13 +24,13 @@ sprint:
   length_days: 14
   start_weekday: Monday
   ceremonies:
-    - { name: sprint_planning, day: 1, duration_minutes: 90, owner: pod_lead }
+    - { name: sprint_planning, day: 1, duration_minutes: 90, owner: ceo }
     - { name: daily_async_standup, day: daily, duration_minutes: 0, owner: 05_delivery_pod_manager }
-    - { name: client_status_call, day: 5, duration_minutes: 30, owner: pod_lead }
+    - { name: client_status_call, day: 5, duration_minutes: 30, owner: ceo }
     - { name: mid_sprint_budget_review, day: 7, duration_minutes: 20, owner: 05_delivery_pod_manager }
-    - { name: client_status_call, day: 10, duration_minutes: 30, owner: pod_lead }
-    - { name: milestone_signoff_review, day: 13, duration_minutes: 60, owner: pod_lead }
-    - { name: retrospective, day: 14, duration_minutes: 45, owner: pod_lead }
+    - { name: client_status_call, day: 10, duration_minutes: 30, owner: ceo }
+    - { name: milestone_signoff_review, day: 13, duration_minutes: 60, owner: ceo }
+    - { name: retrospective, day: 14, duration_minutes: 45, owner: ceo }
   burndown:
     unit: story_points
     points_per_work_order:
@@ -39,10 +41,11 @@ sprint:
     off_track_threshold_pct_behind_ideal: 30
 
 work_orders:
-  sla_hours:
-    standard: 72      # verified work order -> PR approved by the parity gatekeeper
-    complex: 120
-  max_concurrent_per_pod: 3
+  # Provider Business Days (Mon-Fri, IST), matching the retainer MSA Exhibit B.
+  sla_business_days:
+    standard: 5       # verified contract published -> PR approved by the parity gatekeeper
+    complex: 10
+  max_concurrent_per_pod: 2
   acceptance:
     parity_pass_rate: 1.0
     min_branch_coverage: 0.90
@@ -66,12 +69,12 @@ token_budget:
     02_mcp_spec_publisher: 35
     03_claude_code_transpiler: 300
     04_automated_parity_gatekeeper: 80
-  planned_work_orders_per_month: 12
+  planned_work_orders_per_month: 6
   alert_thresholds_pct: [50, 75, 90, 100]
   actions:
-    "50": notify_pod_lead
+    "50": notify_ceo
     "75": require_effort_review    # transpiler drops from high to medium effort on non-critical work orders
-    "90": freeze_new_work_orders   # only in-flight work orders continue; reserve is unlocked by pod lead
+    "90": freeze_new_work_orders   # only in-flight work orders continue; reserve is unlocked by the CEO
     "100": hard_stop               # API keys for the pod are rotated to a zero-quota key until next cycle
   reconciliation:
     source_of_truth: provider_invoices   # Anthropic Console usage + Google Cloud billing export
@@ -131,22 +134,32 @@ models:
 
 pod_template:
   humans:
-    - { role: pod_lead, fte: 0.5, responsibilities: [client relationship, sprint planning, escalations, sign-off] }
-    - { role: senior_modernization_engineer, fte: 2.0, responsibilities: [agent supervision, code review, legacy SME liaison] }
-    - { role: parity_qa_engineer, fte: 0.5, responsibilities: [replay datasets, dual-engine harness, acceptance evidence] }
+    - role: ceo
+      count: 1
+      responsibilities:
+        - client relationship, discovery calls and status calls
+        - approving and sending every first-touch email
+        - reviewing every business rule, review flag and gate report before a deliverable is submitted
+        - accepting deliverables and signing for the company (never delegated to agents)
+        - finance, tax and compliance filings with the company's CA/CS
   agents:
     - 01_gemini_cognitive_ingest
     - 02_mcp_spec_publisher
     - 03_claude_code_transpiler
     - 04_automated_parity_gatekeeper
     - 05_delivery_pod_manager
+  # Reserved capacity is bounded by the CEO's review time, not by agent throughput.
+  capacity:
+    concurrent_work_orders: 2
+    standard_work_orders_per_month: 6
   monthly_cost_plan_usd:
-    people: 26500
     model_tokens: 6500
     infrastructure: 1500     # CI runners, replay storage, observability
-    tooling_and_insurance: 500
-    total: 35000
+    insurance_and_tooling: 1000   # tech E&O + cyber premium (broker quote pending), accounting, e-sign
+    professional_services: 500    # CA/CS retainer, statutory audit accrual, counsel on contracts
+    total: 9500
   monthly_revenue_usd: 100000
+  notes: "Founder compensation is decided by the CEO and the CA (salary vs dividend) and is not part of this plan."
 
 pods:
   - { id: pod-alpha, status: staffed, client_account: null, start_date: null }
@@ -160,15 +173,17 @@ pods:
   - { id: pod-india, status: bench, client_account: null, start_date: null }
   - { id: pod-juliet, status: bench, client_account: null, start_date: null }
 
-hiring_triggers:
-  # A bench pod is staffed (humans hired/assigned) when signed pipeline reaches these levels.
-  staff_next_pod_when:
-    signed_pilots_in_flight: 2
-    or_retainers_signed_without_pod: 1
+capacity_triggers:
+  # The CEO's review time is the bottleneck. Before taking more work than the capacity above,
+  # either decline/queue it or bring in a second accountable reviewer -- and update the contracts'
+  # Delivery Model section first, since clients are told the CEO is the only human.
+  add_reviewer_when:
+    concurrent_work_orders_requested: 3
+    or_retainers_signed: 2
   lead_time_days: 30
 
 escalation:
-  sla_breach_risk: [pod_lead, delivery_director]
-  budget_threshold_90: [pod_lead, delivery_director, finance]
-  parity_failure_after_two_cycles: [pod_lead, legacy_sme, client_technical_owner]
-  security_or_data_incident: [pod_lead, security_officer, client_ciso]
+  sla_breach_risk: [ceo, client_technical_owner]
+  budget_threshold_90: [ceo]
+  parity_failure_after_two_cycles: [ceo, legacy_sme, client_technical_owner]
+  security_or_data_incident: [ceo, client_ciso, cert_in]   # CERT-In within 6 hours where the directions apply

@@ -1,85 +1,116 @@
-# LegacyModern AI — daily client outreach configuration.
+# LegacyModern AI ([Provider legal name] Private Limited, India) — daily client outreach configuration.
 #
 # Read by agents/06_daily_client_outreach.md, which runs every business morning as a
 # Claude Cowork scheduled task (or a Claude Code routine). Messaging comes from
-# sales_and_commercial/cto_outbound_pitch.md.
+# sales_and_commercial/cto_outbound_pitch.md (read its Section 1 "Honesty rules" first).
 #
-# Safety default: mode = draft_for_approval. The agent writes Gmail drafts and a review
-# queue; a human sends. Switch to auto_send_followups only after two weeks of approved
-# drafts with zero edits to the agent's copy.
+# The company has one human: the CEO. Mode chosen by the CEO on 2026-10-13: auto_send_followups.
+# - Every first-touch email is a draft the CEO reviews and sends personally (never automated).
+# - The agent may send touch 2 / touch 3 follow-ups and meeting-logistics replies ONLY on threads
+#   the CEO started, inside send_windows, after re-checking the suppression list.
+# - Objection replies and anything legal, pricing-negotiation or security-related stay drafts.
+# Until the pre-outreach checklist below is complete, the agent behaves as draft_for_approval.
+#
+# Do not start any run until the pre-signature/pre-outreach checklist in CHANGES.md is done
+# (company incorporated, registered office address available for the footer, privacy notice
+# published, legitimate-interests assessment written).
 
-version: 1
+version: 2
 
 schedule:
-  timezone: America/New_York
+  timezone: Asia/Kolkata         # the CEO works from India; send slots below are recipient-local
   run_at: "08:20"
   business_days: [MON, TUE, WED, THU, FRI]
-  skip_dates:
-    - "2026-11-26"   # US Thanksgiving
+  skip_dates:                    # CEO's holiday calendar; add Indian holidays and planned leave
+    - "2026-11-26"   # US Thanksgiving (US recipients)
     - "2026-12-25"
     - "2027-01-01"
-  end_of_day_summary_at: "17:15"
+  end_of_day_summary_at: "18:30"
 
-mode: draft_for_approval     # draft_for_approval | auto_send_followups
+mode: auto_send_followups    # draft_for_approval | auto_send_followups (first touches always CEO-sent)
 daily_caps:
-  new_prospects: 15          # first-touch drafts per day
+  new_prospects: 15          # first-touch drafts per day (all markets combined)
   follow_ups: 30             # touch 2 / touch 3 drafts per day
-  reply_handling: 50         # replies classified and answered per day
+  reply_handling: 50         # replies classified and drafted per day
   max_per_company_per_week: 2
+  per_country:
+    # Singapore Spam Control Act s.6: "bulk" = >100 similar messages in 24h, >1,000 in 30 days
+    # or >10,000 in a year (with a Singapore link). Stay well under every limit.
+    SG: { per_day: 20, per_30_days: 300, per_year: 3000 }
 
 send_windows:
-  # Recipient-local time. Drafts are labelled with the recommended send slot.
+  # Recipient-local time. Drafts are labelled with the recommended send slot; the CEO sends.
   preferred_days: [TUE, WED, THU]
   start: "07:30"
   end: "10:30"
 
 cadence:
-  # Days after touch 1. Touch 3 is the break-up email.
+  # Days after touch 1. Touch 3 is the break-up email. Partner sequence C has 2 touches.
   touch_1: 0
   touch_2: 4
   touch_3: 9
+  partner_touch_2: 7
   stop_on: [reply, bounce, unsubscribe, meeting_booked, out_of_office_over_14_days]
   recycle_after_days: 120
 
 ideal_customer_profile:
-  industries:
-    - retail and commercial banking
-    - insurance (P&C, life, reinsurance)
-    - payments and card processing
-    - federal, state and local government
-    - airlines and travel distribution
-    - healthcare payers
-    - large retail and logistics
-  company_size:
-    min_annual_revenue_usd: 1000000000
-    min_employees: 2000
-  geography: [United States, Canada, United Kingdom, Ireland, Germany, Netherlands, Nordics, Australia, Singapore, India]
+  segments:
+    mid_market_buyers:
+      sequence_by_persona: true          # A for CIO/CTO, B for engineering leaders
+      industries:
+        - regional and community banks, credit unions
+        - mid-size insurers and third-party administrators
+        - payments, lending and card processing (non-bank)
+        - logistics, distribution and wholesale
+        - manufacturers running IBM i (AS/400) / RPG
+        - healthcare payers and administrators (masked or synthetic data only; no PHI)
+      company_size:
+        min_annual_revenue_usd: 50000000
+        max_annual_revenue_usd: 2000000000
+        min_employees: 200
+        max_employees: 10000
+    channel_partners:
+      sequence: C
+      types:
+        - boutique mainframe / IBM i consultancies
+        - system integrators with a legacy-modernization practice and no parity method
+        - cloud-migration partners (AWS, Azure, Google Cloud)
+        - managed-service providers running legacy estates
+      qualification: "Public website describes a mainframe, IBM i, legacy-modernization or cloud-migration practice; cite that page in touch 1."
+  # Email geography. A market is emailed only if listed here AND its rules in `compliance.market_rules` are met.
+  geography: [United States, Canada, United Kingdom, Australia, Singapore, India]
   technology_signals:
     strong:
-      - job postings mentioning COBOL, CICS, IMS, JCL, DB2 z/OS, PL/I, Natural/Adabas or RPG
-      - open roles for "mainframe modernization" or "core banking transformation"
-      - public statements about exiting a data center or mainframe contract renewal
+      - job postings mentioning COBOL, CICS, IMS, JCL, DB2 z/OS, PL/I, Natural/Adabas, RPG or IBM i
+      - open roles for "mainframe modernization", "IBM i modernization" or "core system replacement"
+      - public statements about exiting a data center or a legacy platform contract renewal
       - Oracle Forms / PL/SQL estates with an announced cloud migration
     supporting:
       - recent CIO/CTO appointment (first 180 days)
-      - regulator findings on technology resilience or operational risk
-      - announced cloud partnership (AWS, Azure, Google Cloud) without named modernization partner
+      - regulator or auditor findings on technology resilience
+      - announced cloud partnership without a named modernization partner
   exclude:
-    - current clients and anyone in an active pilot
+    - current clients and anyone in an active assessment or pilot
     - companies with a publicly announced modernization partner for the same estate in the last 12 months
     - government entities that require a formal RFP channel (route to the RFP tracker instead)
+    - enterprises whose public vendor requirements mandate SOC 2 reports or insurance limits the company does not hold (approach only via partner or inbound)
+    - sole traders and non-corporate partnerships in the UK (PECR treats them as individuals)
 
 personas:
   primary:
-    titles: [Chief Information Officer, Chief Technology Officer, CIO, CTO]
+    titles: [Chief Information Officer, Chief Technology Officer, CIO, CTO, Head of IT, IT Director]
     sequence: A
   secondary:
-    titles: [VP Engineering, SVP Technology, Head of Core Systems, Head of Mainframe, Director of Application Modernization, Chief Architect]
+    titles: [VP Engineering, SVP Technology, Head of Core Systems, Head of Mainframe, IBM i Manager, Director of Application Modernization, Chief Architect, IT Manager]
     sequence: B
-  never_contact: [students, recruiters, vendors' sales staff, personal email addresses]
+  partners:
+    titles: [Founder, Managing Partner, Practice Lead, Head of Alliances, Head of Partnerships, CTO]
+    sequence: C
+  never_contact: [students, recruiters, vendors' sales staff, personal email addresses, employees of current clients outside the agreed contacts]
 
 sources:
   # Prospect discovery, in priority order. The agent uses whichever connectors are enabled.
+  # Every email address must have recorded provenance (see tracker columns email_source_*).
   - connector: vibe_prospecting      # Explorium-backed company + contact search
   - connector: apollo
   - connector: linkedin_sales_navigator_export
@@ -95,66 +126,115 @@ tracker:
     - company
     - domain
     - industry
+    - segment          # mid_market_buyers | channel_partners
+    - country          # ISO 3166-1 alpha-2 of the recipient's work location
+    - company_legal_form   # e.g. Inc, Ltd, LLP, sole trader (UK PECR check)
     - full_name
     - title
     - persona
     - email
     - email_verified
+    - email_source_url          # where the address was found (CASL / Spam Act evidence)
+    - email_source_captured_at  # ISO timestamp of capture
+    - email_source_evidence_path  # screenshot or saved page under outreach_data/evidence/
+    - email_conspicuously_published   # true only if on the company's own site/official material, no "no unsolicited email" notice nearby
+    - role_relevance_note       # why the message is relevant to this person's role
     - linkedin_url
     - trigger_event
     - trigger_source_url
     - sequence
+    - ai_disclosure_given       # true once the 1.2 disclosure or the call disclosure has been given in writing
     - stage            # new | touch_1_drafted | touch_1_sent | touch_2_sent | touch_3_sent | replied | meeting_booked | nurture | disqualified | unsubscribed
     - last_touch_date
     - next_touch_date
     - reply_classification
-    - owner
+    - owner            # always the CEO
     - notes
   suppression_list: outreach_data/suppression.csv
   activity_log: outreach_data/activity_log.jsonl
   daily_reports_dir: outreach_data/reports/
+  evidence_dir: outreach_data/evidence/
 
 sender:
-  # The sending identity is the connected Gmail / Google Workspace account. Name, title and
-  # phone come from environment variables so no personal data is committed to git.
-  name_env: OUTREACH_SENDER_NAME
-  title_env: OUTREACH_SENDER_TITLE
+  # The sending identity is the CEO's connected Gmail / Google Workspace account. Values come
+  # from environment variables so no personal data is committed to git.
+  name_env: OUTREACH_SENDER_NAME                 # the CEO's real full name — no aliases
+  title: "Founder & CEO"
   phone_env: OUTREACH_SENDER_PHONE
   calendar_link_env: OUTREACH_CALENDAR_LINK
-  company: LegacyModern AI
-  postal_address_env: OUTREACH_POSTAL_ADDRESS   # required in every commercial email (CAN-SPAM)
+  trading_name: LegacyModern AI
+  legal_entity_name_env: OUTREACH_LEGAL_ENTITY_NAME   # "[Provider legal name] Private Limited"
+  postal_address_env: OUTREACH_POSTAL_ADDRESS   # registered office in India; required in every commercial email
+  privacy_notice_url_env: OUTREACH_PRIVACY_NOTICE_URL
+  assessment_fee_env: OUTREACH_ASSESSMENT_FEE_USD   # only used in pricing replies; leave unset to omit the figure
 
 compliance:
   include_opt_out_line: true
-  opt_out_text: "If this isn't relevant, reply \"no thanks\" and I won't contact you again."
-  honor_opt_out_within_hours: 24
+  opt_out_text: "This is a commercial message. If it isn't relevant, reply \"no thanks\" and I won't contact you again."
+  include_ad_disclosure: true            # CAN-SPAM: identify the message as an advertisement
+  include_legal_entity_and_address: true
+  include_privacy_notice_link: true      # UK GDPR / GDPR transparency at first contact
+  honor_opt_out_within_hours: 24         # stricter than every market's statutory period
+  opt_out_valid_for_days: 60             # keep reply-based opt-out working at least this long (CAN-SPAM requires 30 days; CASL contact details must stay valid 60 days)
   lawful_basis_eu_uk: legitimate_interest
-  legitimate_interest_note: "B2B outreach to a role-based work address about modernizing systems the recipient is responsible for."
+  legitimate_interest_note: "B2B outreach to a work address of an employee of a corporate entity about modernizing systems the recipient is responsible for."
+  legitimate_interests_assessment_path: compliance/lia_outreach.md   # write before the first UK email
   # Never cold-emailed: prior consent is required for advertising email, B2B included
-  # (Germany: UWG s.7(2) no.2; Austria: TKG 2021 s.174). Reach these markets through
-  # events, referrals, partners, or inbound only. Add more codes as counsel advises.
+  # (Germany: UWG §7(2) no.2, confirmed; Austria: TKG 2021 s.174 per the previous config, not re-verified). Reach these markets through
+  # events, referrals, partners or inbound only.
   regions_requiring_opt_in: [DE, AT]
+  # Not emailed until counsel confirms the B2B rule (unverified in research).
+  regions_on_hold: [IE, NL, SE, NO, DK, FI, IS]
+  market_rules:
+    US: { rule: "CAN-SPAM opt-out regime; ad disclosure, postal address, working opt-out, honour within 10 business days (we do 24h)" }
+    CA: { rule: "CASL implied consent only for conspicuously published, role-relevant addresses with no refusal notice; keep provenance evidence; identify sender with mailing address and a contact method valid 60 days; unsubscribe within 10 business days", require_conspicuous_publication: true }
+    AU: { rule: "Spam Act: consent required; exception only for conspicuously published role addresses with no 'no unsolicited messages' statement and role-relevant content; unsubscribe within 5 business days; no harvested lists", require_conspicuous_publication: true }
+    UK: { rule: "PECR reg 22 does not apply to corporate subscribers; email only employees of limited companies, LLPs and other corporate bodies; UK GDPR legitimate interests with privacy link; stop permanently on objection", corporate_subscribers_only: true }
+    SG: { rule: "Spam Control Act bulk thresholds (see daily_caps.per_country.SG); publication is not consent; unsubscribe effective after 10 business days (we do 24h); no SMS/calls to SG numbers without a DNC check" }
+    IN: { rule: "No email-specific anti-spam statute found; use only addresses the person or company published; identify sender, opt-out, keep source; reassess when DPDP core duties start (about 13 May 2027)" }
   no_purchased_lists_without_provenance: true
+  no_address_guessing_for: [CA, AU]
   record_retention_days: 730
 
 quality_bar:
-  personalization_required: true        # every touch 1 must cite a specific, verifiable trigger
-  max_words_touch_1: 120
-  max_words_follow_up: 80
+  personalization_required: true        # every buyer touch 1 must cite a specific, verifiable trigger; partner touch 1 cites a practice page
+  max_words_touch_1: 130                # +10 to allow the optional AI-delivery disclosure line
+  max_words_follow_up: 90
+  ai_disclosure:
+    optional_line_in_touch_1: "P.S. Full disclosure: the delivery work is done by AI agents (Google Gemini and Anthropic Claude); I'm the company's only human, and I review and sign off everything they produce."
+    mandatory_when: [pricing, scope, proposal, sow, delivery_questions, partner_touch_1]
   banned_phrases:
     - "I hope this email finds you well"
     - "just circling back"
     - "quick question"
     - "synergy"
     - "revolutionary"
-  claims_policy: "Only claims backed by the contract terms (parity guarantee, SLAs) or a client-approved reference. No invented case studies, logos or statistics."
+    # Phrases that imply a team the company does not have (banned everywhere):
+    - "our team"
+    - "our engineers"
+    - "my team"
+    - "our pod"
+    - "dedicated pod"
+    - "dedicated team"
+    - "my colleague"
+    - "zero regressions"
+    - "bank-grade"
+    - "enterprise-grade"
+  banned_claims:
+    # May appear only in a reply that states the company does NOT hold them (playbook Section 8).
+    - "SOC 2"
+    - "ISO 27001"
+    - "insured for"
+  claims_policy: "Only claims backed by the contract terms (parity guarantee on the agreed tests and replay data, service levels in Exhibit B, the AI delivery model) or a client-approved reference. No invented case studies, logos, statistics, team members, certifications or insurance amounts. Never imply that anyone other than the CEO works on delivery."
 
 reporting:
   kpis:
     reply_rate_target_pct: 8
     positive_reply_rate_target_pct: 3
     meetings_per_week_target: 4
-    pilots_per_quarter_target: 3
+    assessments_per_quarter_target: 3
+    pilots_per_quarter_target: 2
+  capacity_guard: "Flag in the daily report if signed commitments (retainer Capacity + one pilot at a time) would exceed the CEO's review hours; stop proposing new pilots until resolved."
   notify:
     channel: email                      # email | slack
     recipients_env: OUTREACH_REPORT_RECIPIENTS

@@ -55,7 +55,7 @@ Search the inbox for replies to threads in the tracker since the last run. Class
 | `out_of_office` | Shift `next_touch_date` to their return date + 1 business day. |
 | `bounce` | Mark `email_verified = false`; try one alternative verified address via the prospecting connector; otherwise `disqualified`. |
 
-Replies from people at existing clients or active pilots are forwarded to the pod lead
+Replies from people at existing clients or active pilots are forwarded to the CEO
 instead of answered.
 
 ### Step 2 — Due follow-ups (cap: `daily_caps.follow_ups`)
@@ -85,7 +85,7 @@ Reject and rewrite any draft that:
 - makes a claim not supported by the SOW/MSA or a client-approved reference — never invent
   clients, logos, case studies, statistics, or awards;
 - misstates the offer (pilot = $50,000, 14 days, one module up to 50k LOC, 100% parity
-  guarantee per SOW; retainer = $100,000/month, 12 months, 72-hour standard turnaround SLA);
+  guarantee per SOW; retainer = $100,000/month, 12 months, 5-business-day standard turnaround; all work AI-delivered and CEO-reviewed — never imply a team);
 - omits the opt-out line or the sender's postal address (from env) in the signature;
 - addresses anyone in `personas.never_contact` or a personal email domain.
 
@@ -154,14 +154,19 @@ Send it to the recipients in `reporting.recipients_env` and save it to
 | Prospect changed companies | Disqualify old row; add new row only if the new company fits the ICP. |
 | Government buyer that requires procurement channels | Do not email; log in `notes` and surface under "Needs a human". |
 | Prospect asks for pricing | Give the published pilot and retainer terms plainly and propose the call. |
-| Prospect asks for references | Offer the LNFEE010 live walkthrough; mention references only if the pod lead has supplied client-approved ones. |
-| Legal/security questionnaire request | Route to the pod lead; acknowledge receipt within one business day. |
-| A competitor or journalist replies | Do not engage on substance; forward to the pod lead. |
+| Prospect asks for references | Offer the LNFEE010 live walkthrough; mention references only if the CEO has supplied client-approved ones. |
+| Legal/security questionnaire request | Route to the CEO; acknowledge receipt within one business day. |
+| A competitor or journalist replies | Do not engage on substance; forward to the CEO. |
 | Daily caps reached | Stop drafting; queue the rest for tomorrow in priority order (strongest trigger first). |
 
 ## 6. Guardrails
 
 - You never send touch 1 emails yourself. You never send anything in `draft_for_approval` mode.
+- Until every item of the pre-outreach checklist in `company/README.md` is true (company legal
+  name and registered address, company domain mailbox, published privacy notice, sender env
+  vars), behave as `draft_for_approval` whatever the configured mode, and say why in the report.
+- Never imply a human team: you write as the CEO in the first person singular, and every claim
+  follows the honesty rules in `sales_and_commercial/cto_outbound_pitch.md` Section 1.
 - You never contact anyone on the suppression list, ever, including through a different address.
 - You never fabricate triggers, quotes, mutual connections, prior conversations, or results.
 - You never commit `outreach_data/` to git (it holds personal data).

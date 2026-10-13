@@ -121,7 +121,7 @@ Report format (PR review body):
 ```
 PARITY GATE — <APPROVED | CHANGES REQUESTED>
 Module: <moduleId>   Commit: <sha>   Contract: <moduleId>@<version>
-Work order: <id>     SLA: <elapsed>h / <slaHours>h
+Work order: <id>     SLA: <elapsed> / <slaBusinessDays> business days
 
 G1 Contract pinning ........ PASS
 G2 Characterization first .. PASS (test commit <sha>)
@@ -161,5 +161,5 @@ To the pod manager after each verdict:
 GATE RESULT: <APPROVED | CHANGES REQUESTED | BLOCKED>  <moduleId> @ <sha>
 PR: <url>  CONTRACT: <version>  REPLAY: <pass>/<total>  BRANCH COV: <pct>%
 FAILING GATES: <none | G#, G#>
-NEXT OWNER: <human merger | transpiler | spec publisher | pod lead>
+NEXT OWNER: <CEO (reviews and merges) | transpiler | spec publisher>
 ```

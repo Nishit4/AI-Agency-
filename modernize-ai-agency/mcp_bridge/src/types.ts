@@ -350,7 +350,8 @@ export const ModernizationWorkOrderSchema = z.object({
     minBranchCoverage: z.number().min(0.9).max(1),
     maxP99LatencyMs: z.number().positive(),
   }),
-  slaHours: z.number().int().positive(),
+  /** Turnaround in Provider Business Days (Mon-Fri, India Standard Time), per the MSA Exhibit B. */
+  slaBusinessDays: z.number().int().positive(),
   status: z.enum(WORK_ORDER_STATUSES),
   createdAt: z.iso.datetime(),
   dueAt: z.iso.datetime(),

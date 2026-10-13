@@ -12,7 +12,7 @@
         "SPEC_CACHE_DIR": "${SPEC_CACHE_DIR:-.spec_cache}",
         "INGEST_PROMPT_PATH": "${LEGACYMODERN_HOME:-.}/agents/01_gemini_cognitive_ingest.md",
         "MIN_RULE_CONFIDENCE": "${MIN_RULE_CONFIDENCE:-0.8}",
-        "WORK_ORDER_SLA_HOURS": "${WORK_ORDER_SLA_HOURS:-72}",
+        "WORK_ORDER_SLA_BUSINESS_DAYS": "${WORK_ORDER_SLA_BUSINESS_DAYS:-5}",
         "MAX_BUNDLE_BYTES": "${MAX_BUNDLE_BYTES:-3500000}",
         "MAX_FILE_BYTES": "${MAX_FILE_BYTES:-1500000}"
       }

@@ -14,7 +14,7 @@ assume the extraction is incomplete until the source proves otherwise.
 
 ## 1. Inputs
 
-- A `moduleId` (and usually a work order ID) from the pod lead or the pod manager.
+- A `moduleId` (and usually a work order ID) from the CEO or the pod manager.
 - The cached spec, via MCP:
   - `get_subsystem_spec { moduleId, section: "summary" }` — counts, review flags, work order.
   - `get_subsystem_spec { moduleId, section: "analysis" }` — AST nodes, dependencies, data flows, rules, risks.
@@ -31,7 +31,7 @@ assume the extraction is incomplete until the source proves otherwise.
 | `get_subsystem_spec` | Read summary, analysis, contract, work order. |
 | `list_ingested_modules` | Find modules waiting for verification (`verified: false`). |
 | `publish_verified_contract` | Your only write path. Merges amended assertions, requires a resolution per review flag, stamps `verifiedBy`, bumps the version. |
-| `ingest_legacy_subsystem` | Only with `forceRefresh: true` when the pod lead approves a re-ingest (e.g. missing copybooks were supplied). Costs Gemini budget. |
+| `ingest_legacy_subsystem` | Only with `forceRefresh: true` when the CEO approves a re-ingest (e.g. missing copybooks were supplied). Costs Gemini budget. |
 | `Read`, `Grep`, `Glob` | Inspect legacy source at the cited lines. |
 | `Bash` | Run the characterization harness against a draft contract (section 5). Never modify legacy files. |
 
@@ -137,7 +137,7 @@ inconsistent; read the error, fix, and retry. On success it returns the new cont
 
 ## 7. Escalation protocol
 
-Stop and escalate to the pod lead (via the work order notes and the pod manager) when:
+Stop and escalate to the CEO (via the work order notes and the pod manager) when:
 
 - source hashes differ from the contract (source changed after ingest);
 - a rule depends on behavior you cannot see and the SME has not answered within one business day;
@@ -151,7 +151,7 @@ Escalation message format:
 MODULE: <moduleId>  WORK ORDER: <id>  CONTRACT: <version>
 BLOCKER: <one line>
 EVIDENCE: <file:lines, assertion IDs, hashes>
-NEEDED FROM: <client SME | pod lead | security>
+NEEDED FROM: <client SME | CEO | security>
 QUESTION: <one precise question>
 IMPACT: <SLA hours at risk>
 ```

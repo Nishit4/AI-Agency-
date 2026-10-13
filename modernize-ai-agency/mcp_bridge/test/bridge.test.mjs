@@ -112,7 +112,7 @@ function fixtureEntry() {
       contractVersion: "1.0.0",
       assertionCount: 1,
       acceptanceCriteria: { parityPassRate: 1, minBranchCoverage: 0.9, maxP99LatencyMs: 250 },
-      slaHours: 72,
+      slaBusinessDays: 5,
       status: "draft",
       createdAt: "2026-10-01T09:00:00.000Z",
       dueAt: "2026-10-04T09:00:00.000Z",
@@ -322,8 +322,10 @@ test("ingest creates work orders in draft; the SLA clock starts only at publicat
     targetLanguage: "Go",
     targetServiceName: "late-fee-service",
   };
-  const wo = assembleWorkOrder(options, bundle, contract, 72, new Date("2026-10-13T09:00:00.000Z"));
+  const wo = assembleWorkOrder(options, bundle, contract, 5, new Date("2026-10-13T09:00:00.000Z"));
   assert.equal(wo.status, "draft");
+  // Tue 13 Oct 2026 + 5 Provider Business Days = Tue 20 Oct 2026 (weekend skipped).
+  assert.equal(wo.dueAt, "2026-10-20T09:00:00.000Z");
   assert.equal(wo.branch, "modernize/LNFEE010");
   assert.match(wo.workOrderId, /^WO-2026-[0-9]{6}$/);
 });
@@ -369,3 +371,13 @@ test("hard quota errors are recognised and not retried", async () => {
   assert.equal(isHardQuotaError(shortWait), false);
   assert.equal(isHardQuotaError(overloaded), false);
 });
+
+test("business days skip Saturday and Sunday in India Standard Time", async () => {
+  const { addBusinessDays } = await import("../dist/gemini_client.js");
+  // Friday 16 Oct 2026 10:00 IST (04:30Z) + 1 business day = Monday 19 Oct.
+  assert.equal(addBusinessDays(new Date("2026-10-16T04:30:00.000Z"), 1).toISOString(), "2026-10-19T04:30:00.000Z");
+  // Friday 23:00 IST is 17:30Z Friday; +1 day lands on Saturday IST, so Monday is used.
+  assert.equal(addBusinessDays(new Date("2026-10-16T17:30:00.000Z"), 1).toISOString(), "2026-10-19T17:30:00.000Z");
+  assert.equal(addBusinessDays(new Date("2026-10-13T09:00:00.000Z"), 10).toISOString(), "2026-10-27T09:00:00.000Z");
+});
+

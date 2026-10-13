@@ -4,7 +4,9 @@ Autonomous legacy monolith de-risking and cloud-native re-platforming, run by Cl
 Claude Cowork, and a Gemini long-context ingest bridge.
 
 **Business model:** a $50,000, 14-day Proof-of-Value pilot that converts into a $100,000/month,
-12-month retainer with a dedicated delivery pod. Ten retainers = **$1,000,000 MRR**.
+12-month retainer for reserved capacity of a supervised AI delivery pipeline. The company is
+AI-delivered: AI agents do the work and the CEO is the only human, the accountable reviewer and
+signatory (see `company/legal_operating_policy.md`). Revenue target: $1,000,000 MRR.
 
 **Delivery promise:** every modernized module ships only at **100% behavioral parity** with the
 legacy code, proven by executable characterization tests traced to legacy source lines and by
@@ -67,7 +69,8 @@ flowchart LR
 | Pod config | `config/pod_config.yaml` | Pods, sprint cadence, SLAs, token allocation and the $6,500/pod/month ceiling, model rates |
 | MCP client config | `config/mcp_settings.json` (also `.mcp.json`) | Connects Claude Code to the spec bridge (and Gemini through it) and to GitHub |
 | Outreach config | `config/outreach_schedule.yaml` | ICP, cadence, caps, compliance for the daily outreach agent |
-| Commercial | `sales_and_commercial/` | Pilot SOW ($50k), retainer MSA ($100k/mo), outbound playbook |
+| Commercial | `sales_and_commercial/` | Pilot SOW ($50k) with Paid Assessment option, retainer MSA ($100k/mo), outbound playbook — rewritten for honest AI delivery (see `CHANGES.md`) |
+| Company HQ | `company/` | **Start here as CEO:** India formation, compliance calendar, tax and payments, legal operating policy, CEO manual, name shortlist, verified prospects |
 
 ---
 
@@ -179,7 +182,7 @@ cd mcp_bridge && npm run inspect      # opens the MCP Inspector against dist/ind
 | `SPEC_CACHE_DIR` | `./.spec_cache` | Where verified specs are stored |
 | `INGEST_PROMPT_PATH` | `agents/01_gemini_cognitive_ingest.md` | Gemini system instruction |
 | `MIN_RULE_CONFIDENCE` | `0.8` | Rules below this become review flags that block publication |
-| `WORK_ORDER_SLA_HOURS` | `72` | SLA written into generated work orders |
+| `WORK_ORDER_SLA_BUSINESS_DAYS` | `5` | Turnaround (Provider Business Days, Mon–Fri IST) written into work orders at publication |
 | `MAX_BUNDLE_BYTES` / `MAX_FILE_BYTES` | `3500000` / `1500000` | Bundle limits |
 
 ---
@@ -203,7 +206,8 @@ targetLanguage=Go, targetServiceName=late-fee-service. Then show the summary.
 The bridge bundles the two files with line numbers, calls Gemini with the ingest system prompt
 and a JSON response schema, validates the result (schema, lineage ranges, rule/assertion cross
 references), stores it under `.spec_cache/LNFEE010/`, and returns counts, review flags, and a
-work order (`WO-2026-xxxxxx`, branch `modernize/LNFEE010`, due in 72 h).
+work order (`WO-2026-xxxxxx`, branch `modernize/LNFEE010`, status `draft`; the 5-business-day
+turnaround clock starts when the verified contract is published).
 
 ### Step 2 — Verify and publish the contract
 ```
@@ -285,14 +289,16 @@ updates the tracker, and emails a daily report.
    `OUTREACH_CALENDAR_LINK`, `OUTREACH_POSTAL_ADDRESS` (legally required in commercial email),
    `OUTREACH_REPORT_RECIPIENTS`.
 4. Review `config/outreach_schedule.yaml`: ICP, daily caps, time zone, and keep
-   `mode: draft_for_approval` for at least the first two weeks.
+   `mode: auto_send_followups` (the CEO's choice): you review and send every first email
+   yourself; the agent sends follow-ups only on threads you started. Until the pre-outreach
+   checklist in `company/README.md` is complete, the agent stays in draft-only behaviour.
 
 **Schedule it:** create a Cowork scheduled task for every weekday at 08:20 with this prompt:
 
 ```
 Run the daily client outreach for LegacyModern AI. Follow agents/06_daily_client_outreach.md
 exactly, using config/outreach_schedule.yaml and sales_and_commercial/cto_outbound_pitch.md.
-Draft only (mode draft_for_approval). Finish with the daily report.
+First-touch emails are drafts for the CEO; follow-ups only on CEO-started threads. Finish with the daily report.
 ```
 
 Cowork's local scheduled tasks run while your computer is awake and the desktop app is open.
@@ -311,12 +317,12 @@ Prospect data lives in `outreach_data/` (git-ignored) because it contains person
 | Every business day 08:20 | Agent 06 (Cowork) | Outreach run + report |
 | Every business day 09:00 | Agent 05 | Pod standup: burndown, SLA, spend |
 | On every PR marked ready | Agent 04 | Parity gate |
-| Sprint day 1 | Pod lead + Agent 05 | Planning (≤ 3 concurrent work orders) |
-| Sprint days 5 and 10 | Pod lead | Client status call |
+| Sprint day 1 | CEO + Agent 05 | Planning (≤ 2 concurrent work orders, about 6 a month) |
+| Sprint days 5 and 10 | CEO | Client status call |
 | Sprint day 7 | Agent 05 | Mid-sprint budget review |
-| Sprint day 12–13 | Agent 05 + pod lead | Sign-off dossier and client review |
+| Sprint day 12–13 | Agent 05 + CEO | Sign-off dossier and client review |
 | Weekly | Agent 05 | Token spend reconciliation against invoices |
-| Monthly | Delivery director | Steering committee per account |
+| Monthly | CEO | Steering committee per account |
 
 ---
 

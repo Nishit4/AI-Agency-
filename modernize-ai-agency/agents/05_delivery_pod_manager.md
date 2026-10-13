@@ -72,6 +72,8 @@ Decisions needed: <none | list with owner and deadline>
   200k tokens use the higher tier).
 - Track three numbers every day: month-to-date spend, spend per work order vs plan, and a
   linear month-end projection (`MTD / days_elapsed × days_in_month`).
+- If a model's rates are `null` in the catalog, report its token counts and mark that spend
+  "unpriced"; never borrow another model's rates. Flag the missing rates to the pod lead.
 - Thresholds on MTD or projection, whichever crosses first:
 
 | Threshold | Action |

@@ -103,16 +103,26 @@ models:
       input_over_100k: 0.50
       output_over_100k: 2.50
       context_window_tokens: 1000000
-    gemini-2.5-pro:
+    gemini-3.1-pro-preview:
       provider: google
-      input_up_to_200k: 1.25
-      input_over_200k: 2.50
-      output_up_to_200k: 10.00
-      output_over_200k: 15.00
+      # Rates not yet verified: Google's pricing page was unreachable from the build
+      # environment. Enter them from https://ai.google.dev/gemini-api/docs/pricing before the
+      # first billing cycle; until then the pod manager reports Gemini spend as "unpriced"
+      # (token counts only) instead of estimating.
+      input_up_to_200k: null
+      input_over_200k: null
+      output_up_to_200k: null
+      output_over_200k: null
       context_window_tokens: 1048576
-      notes: "Planning rates; reconcile against the Google Cloud billing export every week and update this block."
+      notes: "Production ingest model. Requires a billing-enabled key: the free tier has zero Pro quota."
+    gemini-3-flash-preview:
+      provider: google
+      input_up_to_200k: null
+      output_up_to_200k: null
+      context_window_tokens: 1048576
+      notes: "Evaluation/demo ingest on free-tier keys. Verified live on 2026-10-13: LNFEE010 in 76 s, 15,884 tokens, 9/9 assertions correct against the compiled COBOL."
   assignment:
-    01_gemini_cognitive_ingest: { model: gemini-2.5-pro, temperature: 0 }
+    01_gemini_cognitive_ingest: { model: gemini-3.1-pro-preview, temperature: 0, free_tier_fallback: gemini-3-flash-preview }
     02_mcp_spec_publisher: { model: claude-sonnet-5-5, effort: high }
     03_claude_code_transpiler: { model: claude-opus-5-5, effort: high }
     04_automated_parity_gatekeeper: { model: claude-sonnet-5-5, effort: high }

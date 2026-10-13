@@ -116,13 +116,17 @@ Export credentials (use your secret manager or a shell profile that is not commi
 mkdir -p ~/.config/legacymodern && chmod 700 ~/.config/legacymodern   # store keys here, never in the repo
 export GEMINI_API_KEY="$(cat ~/.config/legacymodern/gemini_api_key)"                  # required for ingest
 export GITHUB_PERSONAL_ACCESS_TOKEN="$(cat ~/.config/legacymodern/github_token)"      # required for PR tools
-export GEMINI_MODEL=gemini-2.5-pro              # optional; any Gemini model with a 1M-token window
+export GEMINI_MODEL=gemini-3.1-pro-preview      # optional; default. Free-tier keys: gemini-3-flash-preview
 export LEGACYMODERN_HOME="$PWD"                 # optional; defaults to the current directory
 ```
 
-> **Model note.** The original design named Gemini 1.5 Pro; Google has retired the 1.5 family,
-> so the bridge defaults to `gemini-2.5-pro` and accepts any current long-context Gemini model
-> through `GEMINI_MODEL`. Nothing else changes.
+> **Model note (verified live on 2026-10-13).** Google has retired the 1.5 and 2.5 families
+> for new keys (`gemini-2.5-pro` returns 404 "no longer available to new users"), so the bridge
+> defaults to `gemini-3.1-pro-preview`. Pro models need a **billing-enabled** key — the free
+> tier has zero Pro quota (429 "limit: 0"). For evaluation on a free-tier key, set
+> `GEMINI_MODEL=gemini-3-flash-preview`: it ingested LNFEE010 in 76 s (15,884 tokens) and all
+> 9 extracted assertions matched the compiled COBOL. Any long-context Gemini model works via
+> `GEMINI_MODEL`; nothing else changes.
 
 ---
 
@@ -169,7 +173,7 @@ cd mcp_bridge && npm run inspect      # opens the MCP Inspector against dist/ind
 | Variable | Default | Meaning |
 |---|---|---|
 | `GEMINI_API_KEY` / `GOOGLE_API_KEY` | — | Gemini credential (ingest only; read tools work without it) |
-| `GEMINI_MODEL` | `gemini-2.5-pro` | Model used for ingest |
+| `GEMINI_MODEL` | `gemini-3.1-pro-preview` | Model used for ingest (free-tier keys: `gemini-3-flash-preview`) |
 | `GEMINI_MAX_INPUT_TOKENS` | `900000` | Refuse bundles larger than this (split the module) |
 | `GEMINI_MAX_ATTEMPTS` | `2` | Initial call + validation-repair attempts |
 | `SPEC_CACHE_DIR` | `./.spec_cache` | Where verified specs are stored |
@@ -351,6 +355,10 @@ CI (`.github/workflows/ci.yml`) runs the same targets on every push and pull req
 | `/mcp` shows the bridge as failed | Run `npm run build` in `mcp_bridge/`; confirm `node --version` ≥ 20.11; start Claude Code from the repository root (paths in `.mcp.json` are relative). |
 | `GEMINI_API_KEY ... is not set` | Export the key before starting Claude Code; read-only tools still work without it. |
 | `Subsystem renders to N tokens` | The module is too large for one pass; split along CALL/package boundaries and ingest parts separately. |
+| `Gemini model "..." is not available to this API key (404)` | The model is retired for new keys; list models for your key (`curl -H "x-goog-api-key: $GEMINI_API_KEY" https://generativelanguage.googleapis.com/v1beta/models`) and set `GEMINI_MODEL`. |
+| `Gemini quota exhausted` | Free-tier keys have no Pro quota: enable billing on the key's Google Cloud project, or use `gemini-3-flash-preview` for evaluation. The bridge fails fast instead of retrying a quota that resets in hours. |
+| `503 ... experiencing high demand` | Transient provider overload; the bridge retries 4 times with backoff (about 30 s). Re-run later or pick another model. |
+| Ingest tool call times out in Claude Code | A live ingest takes 20–90 s for a small module and longer for large ones; raise Claude Code's MCP tool timeout (`MCP_TOOL_TIMEOUT`, milliseconds) if your client cuts it off. |
 | `failed validation after 2 attempt(s)` | Read `details.issues`; usually missing copybooks (add them) or lineage outside file ranges; re-run with `forceRefresh: true`. |
 | `Contract not published: review flags are unresolved` | Provide a `resolutions` entry for each flag, copied verbatim. |
 | Parity test fails on a decimal | Check for `float64`; compare scale; the harness rejects extra decimal places by design. |

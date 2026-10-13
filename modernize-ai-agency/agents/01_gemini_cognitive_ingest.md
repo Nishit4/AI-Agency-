@@ -71,9 +71,9 @@ Each assertion is one executable example of one rule:
 | `description` | One sentence a business analyst can read, citing the decisive value. |
 | `inputs` | Modern camelCase field names. Money and every fixed-point decimal as **decimal strings** (`"100.10"`), integers as JSON integers, flags as booleans, text as strings. |
 | `initialState` | Entity state before the call, e.g. `{"account": {"status": "CURRENT"}}`. Use it for anything the program reads from files, tables, or persisted records. |
-| `expected.outputs` | The complete output map with legacy-exact values. Keep PIC X padding (`"CURRENT   "`) when the legacy field is fixed-width, and set `stringComparison` to `"rtrim"`. Empty object when an error is expected. |
+| `expected.outputs` | The complete output map with legacy-exact values. Every successful assertion of the same `operation` lists exactly the same output keys — never a subset. Keep PIC X padding (`"CURRENT   "`) when the legacy field is fixed-width, and set `stringComparison` to `"rtrim"`. Empty object when an error is expected. |
 | `expected.error` | `null`, or `{code, legacyReturnCode}` using an UPPER_SNAKE_CASE code derived from the legacy message/return code and the literal return code (`"08"`, `"-803"`, `"ORA-01403"`). |
-| `expected.stateTransitions` | Every persisted change: `{entity, field, before, after}`. Omit nothing; the harness fails on undeclared changes. |
+| `expected.stateTransitions` | Every persisted change: `{entity, field, before, after}`. Omit nothing; the harness fails on undeclared changes. The `entity.field` must also appear in `initialState` holding the `before` value; error assertions declare no transitions. |
 | `tolerance` | Omit unless the legacy arithmetic is genuinely inexact (floating point). Fixed-point results are compared exactly. |
 | `boundary` | Required for `boundary` category: field, kind (`min`, `max`, `min_minus_one`, `max_plus_one`, `zero`, `empty`, `null`, `overflow`, `precision_edge`), value, and a rationale that quotes the comparison and its line. |
 | `lineage` | The exact lines that decide the expected result. |

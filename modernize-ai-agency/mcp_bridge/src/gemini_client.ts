@@ -77,7 +77,7 @@ export function loadConfigFromEnv(): GeminiClientConfig {
   const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? "";
   return {
     apiKey,
-    model: process.env.GEMINI_MODEL ?? "gemini-2.5-pro",
+    model: process.env.GEMINI_MODEL ?? "gemini-3.1-pro-preview",
     cacheDir: path.resolve(process.env.SPEC_CACHE_DIR ?? path.join(process.cwd(), ".spec_cache")),
     ingestPromptPath: path.resolve(
       process.env.INGEST_PROMPT_PATH ?? path.join(PACKAGE_ROOT, "..", "agents", "01_gemini_cognitive_ingest.md"),
@@ -377,6 +377,44 @@ export function verifyIngestResult(result: IngestResult, bundle: SourceBundle): 
   for (const ruleId of ruleIds) {
     if (!coveredRules.has(ruleId)) issues.push(`rule ${ruleId} has no behavioral assertions`);
   }
+
+  // The parity harness compares output maps by exact key set, so every successful call of
+  // the same operation must declare the same complete set of outputs.
+  const outputKeysByOperation = new Map<string, Set<string>>();
+  for (const assertion of result.assertions) {
+    if (assertion.expected.error !== null) continue;
+    const keys = outputKeysByOperation.get(assertion.operation) ?? new Set<string>();
+    for (const key of Object.keys(assertion.expected.outputs)) keys.add(key);
+    outputKeysByOperation.set(assertion.operation, keys);
+  }
+  for (const assertion of result.assertions) {
+    if (assertion.expected.error !== null) continue;
+    const expectedKeys = outputKeysByOperation.get(assertion.operation) ?? new Set<string>();
+    const missing = [...expectedKeys].filter((key) => !(key in assertion.expected.outputs));
+    if (missing.length > 0) {
+      issues.push(
+        `assertion ${assertion.assertionId} (${assertion.operation}) omits outputs [${missing.join(", ")}]; ` +
+          "every successful assertion of an operation must list the complete output map",
+      );
+    }
+  }
+
+  // A declared state change must start from a value present in initialState.
+  for (const assertion of result.assertions) {
+    for (const transition of assertion.expected.stateTransitions) {
+      const entity = assertion.initialState[transition.entity];
+      const hasField = typeof entity === "object" && entity !== null && transition.field in (entity as Record<string, unknown>);
+      if (!hasField) {
+        issues.push(
+          `assertion ${assertion.assertionId} declares a transition of ${transition.entity}.${transition.field} ` +
+            `but initialState has no ${transition.entity}.${transition.field}; put the before value in initialState`,
+        );
+      }
+    }
+    if (assertion.expected.error !== null && assertion.expected.stateTransitions.length > 0) {
+      issues.push(`assertion ${assertion.assertionId} expects an error and state transitions; a rejected call must not change state`);
+    }
+  }
   return issues;
 }
 
@@ -584,10 +622,63 @@ const FALLBACK_SYSTEM_INSTRUCTION = [
   "that is not present in the source; record uncertainty in openQuestions and lower the confidence score instead.",
 ].join(" ");
 
+/** Longest server-requested back-off worth waiting for inside one tool call. */
+const MAX_RETRY_DELAY_SECONDS = 60;
+
+/**
+ * Seconds the API asked us to wait, from RetryInfo ("retryDelay": "23s") or the message
+ * ("Please retry in 6h56m29.3s"). Returns null when the error carries no hint.
+ */
+export function requestedRetryDelaySeconds(message: string): number | null {
+  const info = /"retryDelay"\s*:\s*"([0-9.]+)s"/.exec(message);
+  if (info) return Number.parseFloat(info[1]);
+  const text = /retry in ((?:[0-9.]+h)?(?:[0-9.]+m)?(?:[0-9.]+s)?)/i.exec(message);
+  if (!text || !text[1]) return null;
+  let seconds = 0;
+  for (const [, value, unit] of text[1].matchAll(/([0-9.]+)([hms])/g)) {
+    seconds += Number.parseFloat(value) * (unit === "h" ? 3600 : unit === "m" ? 60 : 1);
+  }
+  return seconds;
+}
+
+/**
+ * A quota that cannot recover within this call: a zero quota for the model (free tier has
+ * no Pro quota) or a daily quota whose reset is hours away. Retrying only burns time.
+ */
+export function isHardQuotaError(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 429) return false;
+  if (/limit:\s*0\b/.test(error.message)) return true;
+  const delay = requestedRetryDelaySeconds(error.message);
+  return delay !== null && delay > MAX_RETRY_DELAY_SECONDS;
+}
+
 function isRetryable(error: unknown): boolean {
-  if (error instanceof ApiError) return error.status === 429 || error.status >= 500;
+  if (error instanceof ApiError) {
+    if (isHardQuotaError(error)) return false;
+    return error.status === 429 || error.status >= 500;
+  }
   const code = (error as NodeJS.ErrnoException | undefined)?.code;
   return code === "ECONNRESET" || code === "ETIMEDOUT" || code === "EAI_AGAIN";
+}
+
+/** Rewrites provider errors the operator can act on into actionable messages. */
+function explainGeminiError(error: unknown, model: string): Error {
+  if (error instanceof ApiError && error.status === 404) {
+    return new Error(
+      `Gemini model "${model}" is not available to this API key (404). Set GEMINI_MODEL to a model ` +
+        `listed for the key, e.g. gemini-3.1-pro-preview. Provider message: ${error.message}`,
+    );
+  }
+  if (isHardQuotaError(error)) {
+    const delay = requestedRetryDelaySeconds((error as ApiError).message);
+    return new Error(
+      `Gemini quota exhausted for "${model}"` +
+        (delay !== null ? ` (provider asks to retry in ${Math.round(delay / 60)} min)` : "") +
+        ". Free-tier keys have no quota for Pro models: enable billing on the key's Google Cloud " +
+        "project, or set GEMINI_MODEL to a Flash model (e.g. gemini-3.8-flash) for evaluation runs.",
+    );
+  }
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -645,7 +736,7 @@ export class GeminiIngestClient {
           },
         });
       } catch (error) {
-        if (attempt >= maxNetworkRetries || !isRetryable(error)) throw error;
+        if (attempt >= maxNetworkRetries || !isRetryable(error)) throw explainGeminiError(error, this.config.model);
         await sleep(2 ** attempt * 2_000);
       }
     }
@@ -689,7 +780,11 @@ export class GeminiIngestClient {
     const userPrompt = this.buildUserPrompt(options, bundle);
     const contents: Content[] = [{ role: "user", parts: [{ text: userPrompt }] }];
 
-    const tokenCount = await ai.models.countTokens({ model: this.config.model, contents });
+    const tokenCount = await ai.models
+      .countTokens({ model: this.config.model, contents })
+      .catch((error: unknown) => {
+        throw explainGeminiError(error, this.config.model);
+      });
     const promptTokens = tokenCount.totalTokens ?? 0;
     if (promptTokens > this.config.maxInputTokens) {
       throw new Error(

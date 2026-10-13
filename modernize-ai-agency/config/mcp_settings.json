@@ -6,7 +6,7 @@
       "args": ["${LEGACYMODERN_HOME:-.}/mcp_bridge/dist/index.js"],
       "env": {
         "GEMINI_API_KEY": "${GEMINI_API_KEY}",
-        "GEMINI_MODEL": "${GEMINI_MODEL:-gemini-2.5-pro}",
+        "GEMINI_MODEL": "${GEMINI_MODEL:-gemini-3.1-pro-preview}",
         "GEMINI_MAX_INPUT_TOKENS": "${GEMINI_MAX_INPUT_TOKENS:-900000}",
         "GEMINI_MAX_ATTEMPTS": "${GEMINI_MAX_ATTEMPTS:-2}",
         "SPEC_CACHE_DIR": "${SPEC_CACHE_DIR:-.spec_cache}",

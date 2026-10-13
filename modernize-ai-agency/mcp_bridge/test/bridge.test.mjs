@@ -327,3 +327,45 @@ test("ingest creates work orders in draft; the SLA clock starts only at publicat
   assert.equal(wo.branch, "modernize/LNFEE010");
   assert.match(wo.workOrderId, /^WO-2026-[0-9]{6}$/);
 });
+
+test("verification rejects partial output maps and transitions without initial state", () => {
+  const bundle = {
+    rootDir: "/legacy",
+    files: [{ relativePath: "src/LNFEE010.cbl", absolutePath: "/legacy/src/LNFEE010.cbl", language: "COBOL", sha256: SHA, lineCount: 40, bytes: 1, content: "" }],
+    totalBytes: 1,
+    totalLines: 40,
+    bundleHash: SHA,
+    skipped: [],
+  };
+  const partial = fixtureAssertion("A-002", {
+    expected: { outputs: { newStatus: "DELINQUENT" }, error: null, stateTransitions: [{ entity: "account", field: "status", before: "CURRENT", after: "DELINQUENT" }] },
+  });
+  const issues = verifyIngestResult({ analysis: fixtureAnalysis(), assertions: [fixtureAssertion("A-001"), partial] }, bundle);
+  assert.ok(issues.some((i) => i.includes("A-002") && i.includes("omits outputs [lateFee]")), issues.join("\n"));
+  assert.ok(issues.some((i) => i.includes("A-001") && i.includes("omits outputs [newStatus]")), issues.join("\n"));
+  assert.ok(issues.some((i) => i.includes("A-002") && i.includes("initialState has no account.status")), issues.join("\n"));
+
+  const errorWithTransition = fixtureAssertion("A-003", {
+    category: "error",
+    initialState: { account: { status: "CLOSED" } },
+    expected: { outputs: {}, error: { code: "ACCOUNT_CLOSED", legacyReturnCode: "12" }, stateTransitions: [{ entity: "account", field: "status", before: "CLOSED", after: "CURRENT" }] },
+  });
+  const issues2 = verifyIngestResult({ analysis: fixtureAnalysis(), assertions: [fixtureAssertion("A-001"), errorWithTransition] }, bundle);
+  assert.ok(issues2.some((i) => i.includes("A-003") && i.includes("must not change state")), issues2.join("\n"));
+});
+
+test("hard quota errors are recognised and not retried", async () => {
+  const { isHardQuotaError, requestedRetryDelaySeconds } = await import("../dist/gemini_client.js");
+  const { ApiError } = await import("@google/genai");
+  assert.equal(requestedRetryDelaySeconds("Please retry in 6h56m29.355s."), 6 * 3600 + 56 * 60 + 29.355);
+  assert.equal(requestedRetryDelaySeconds('{"retryDelay": "23s"}'), 23);
+  assert.equal(requestedRetryDelaySeconds("no hint"), null);
+  const zeroQuota = new ApiError({ message: "Quota exceeded for metric: free_tier_requests, limit: 0, model: gemini-3.1-pro", status: 429 });
+  const longWait = new ApiError({ message: "Quota exceeded. Please retry in 6h56m29s.", status: 429 });
+  const shortWait = new ApiError({ message: "Rate limited. Please retry in 12s.", status: 429 });
+  const overloaded = new ApiError({ message: "high demand", status: 503 });
+  assert.equal(isHardQuotaError(zeroQuota), true);
+  assert.equal(isHardQuotaError(longWait), true);
+  assert.equal(isHardQuotaError(shortWait), false);
+  assert.equal(isHardQuotaError(overloaded), false);
+});

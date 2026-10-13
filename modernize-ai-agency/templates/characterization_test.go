@@ -613,6 +613,11 @@ func evaluate(c Contract, a Assertion) []string {
 			mismatches = append(mismatches, fmt.Sprintf("legacy return code: expected %s, got %s",
 				a.Expected.Error.LegacyReturnCode, ce.LegacyReturnCode))
 		}
+		// Legacy programs often still fill response fields on a rejected call (e.g. fee 0,
+		// flag N, status echoed); when the contract asserts them, they are behavior too.
+		if len(a.Expected.Outputs) > 0 {
+			mismatches = append(mismatches, compareValues("outputs", a.Expected.Outputs, result.Outputs, tol, stringMode)...)
+		}
 		if result.State == nil {
 			mismatches = append(mismatches, "error path returned no state; adapters must return the post-call state so side effects can be checked")
 		} else {
@@ -881,4 +886,34 @@ func TestErrorPathSideEffectsFail(t *testing.T) {
 		t.Errorf("clean rejection should pass, got %v", got)
 	}
 	delete(operations, "LeakyReject")
+}
+
+// TestErrorPathOutputsAreCompared proves that response fields a contract asserts on an
+// error path are checked, not silently ignored.
+func TestErrorPathOutputsAreCompared(t *testing.T) {
+	c := Contract{DefaultTolerance: Tolerance{Absolute: "0", Relative: "0", RoundingMode: "HALF_UP", Scale: 2}}
+	a := Assertion{
+		AssertionID:      "A-901",
+		Operation:        "RejectWithResponse",
+		StringComparison: "rtrim",
+		InitialState:     map[string]any{},
+		Expected: Expected{
+			Outputs: map[string]any{"lateFee": "0.00", "feeAssessed": "N", "newStatus": "CLOSED    "},
+			Error:   &ExpectedError{Code: "ACCOUNT_CLOSED", LegacyReturnCode: "12"},
+		},
+	}
+	reject := &ContractError{Code: "ACCOUNT_CLOSED", LegacyReturnCode: "12"}
+	operations["RejectWithResponse"] = func(in Invocation) (Result, error) {
+		return Result{State: in.State, Outputs: map[string]any{"lateFee": "0.00", "feeAssessed": "N", "newStatus": "CLOSED"}}, reject
+	}
+	if got := evaluate(c, a); len(got) != 0 {
+		t.Errorf("matching error response should pass, got %v", got)
+	}
+	operations["RejectWithResponse"] = func(in Invocation) (Result, error) {
+		return Result{State: in.State, Outputs: map[string]any{"lateFee": "5.00", "feeAssessed": "Y", "newStatus": "CLOSED"}}, reject
+	}
+	if got := evaluate(c, a); len(got) != 2 {
+		t.Errorf("expected 2 output mismatches on the error path, got %v", got)
+	}
+	delete(operations, "RejectWithResponse")
 }

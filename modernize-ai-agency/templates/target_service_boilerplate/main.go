@@ -569,6 +569,14 @@ func (a *API) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	writeJSON(w, status, errorBody{Error: body, RequestID: requestIDFrom(r.Context())})
 }
 
+// trimFixedWidth removes the trailing spaces of a PIC X field (LN-ACCT-STATUS is PIC X(10)),
+// so callers passing copybook values unchanged behave as they did against the legacy
+// 88-level comparison. Leading spaces and case stay significant, as in COBOL.
+// lineage: copybooks/LNFEEREC.cpy:10-18 (LN-ACCT-STATUS)
+func trimFixedWidth(s AccountStatus) AccountStatus {
+	return AccountStatus(strings.TrimRight(string(s), " "))
+}
+
 func decodeJSON(r *http.Request, w http.ResponseWriter, dst any) error {
 	if ct := r.Header.Get("Content-Type"); ct != "" && !strings.HasPrefix(ct, "application/json") {
 		return &DomainError{Code: CodeInvalidRequest, Message: "Content-Type must be application/json"}
@@ -622,7 +630,7 @@ func (a *API) handleQuote(w http.ResponseWriter, r *http.Request) {
 		a.writeError(w, r, &DomainError{Code: CodeInvalidRequest, Message: "outstandingBalance, daysPastDue and accountStatus are required"})
 		return
 	}
-	assessment, err := a.svc.Quote(*req.OutstandingBalance, *req.DaysPastDue, *req.AccountStatus)
+	assessment, err := a.svc.Quote(*req.OutstandingBalance, *req.DaysPastDue, trimFixedWidth(*req.AccountStatus))
 	if err != nil {
 		a.writeError(w, r, err)
 		return
@@ -649,7 +657,7 @@ func (a *API) handleUpsertAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	account, err := a.svc.UpsertAccount(r.Context(), UpsertAccountCommand{
 		AccountID: r.PathValue("accountId"), Balance: *req.OutstandingBalance, DaysPastDue: *req.DaysPastDue,
-		Status: *req.Status, ExpectedVersion: req.ExpectedVersion,
+		Status: trimFixedWidth(*req.Status), ExpectedVersion: req.ExpectedVersion,
 	})
 	if err != nil {
 		a.writeError(w, r, err)

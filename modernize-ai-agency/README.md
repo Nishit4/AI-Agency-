@@ -60,7 +60,7 @@ flowchart LR
 | Gemini ingest client | `mcp_bridge/src/gemini_client.ts` | Bundles sources, prompts Gemini with structured JSON output, validates, repairs once, caches |
 | Type system | `mcp_bridge/src/types.ts` | `LegacyModuleAnalysis`, `BehavioralAssertion`, `BehavioralContract`, `ModernizationWorkOrder` (TypeScript + Zod) |
 | Agent prompts | `agents/` | 01 (Gemini system instruction) and 02–06 (Claude Code subagents, auto-loaded via `.claude/agents/`) |
-| Contract schema | `templates/behavioral_contract.json` | JSON Schema 2020-12 with a complete worked example (LNFEE010, 18 assertions) |
+| Contract schema | `templates/behavioral_contract.json` | JSON Schema 2020-12 with a complete worked example (LNFEE010, 31 assertions, each confirmed against the real COBOL under GnuCOBOL) |
 | Parity harness | `templates/characterization_test.go` | Table-driven Go harness: exact-decimal comparison, tolerance + scale, rtrim, undeclared-state detection, parity report |
 | Service template | `templates/target_service_boilerplate/` | Clean Architecture Go 1.22 service: domain invariants, use cases, router, `log/slog` JSON logs, `/healthz` + `/ready`, graceful shutdown |
 | Sample legacy module | `examples/legacy/LNFEE010/` | COBOL program + copybook used by the demo and harness self-tests |
@@ -107,7 +107,7 @@ make verify
 
 `make verify` runs every check from `CLAUDE.md` §6 for this repository: bridge typecheck and
 tests, `gofmt`/`go vet`/`go test -cover` for the harness, and `gofmt`/`go vet`/`go test -race
--cover` for the service template. Expected result: bridge 8/8 tests, harness 18/18 parity
+-cover` for the service template. Expected result: bridge 9/9 tests, harness 31/31 parity
 assertions, service ≥ 90% coverage.
 
 Export credentials (use your secret manager or a shell profile that is not committed):
@@ -208,7 +208,7 @@ Use the mcp-spec-publisher subagent to audit and publish module LNFEE010.
 The publisher spot-checks lineage against the COBOL, builds the coverage matrix, adds missing
 boundary/ordering assertions, resolves review flags, dry-runs the harness in `SPEC_ONLY=1`
 mode, and calls `publish_verified_contract`. Compare the result with the reference contract
-in `templates/behavioral_contract.json` (`examples[0]`, version 1.1.0, 18 assertions).
+in `templates/behavioral_contract.json` (`examples[0]`, version 1.2.0, 31 assertions).
 
 ### Step 3 — Characterize and transpile
 Point the transpiler at a client modernization repo (for the demo, a scratch repo):
@@ -218,7 +218,7 @@ Use the claude-code-transpiler subagent on work order <WO id> for LNFEE010.
 Target repo: ~/work/demo-modernization (default branch main). Budget: $300.
 ```
 It creates `modernize/LNFEE010`, scaffolds from `templates/target_service_boilerplate`, pins
-`contracts/LNFEE010.json`, commits the characterization suite red (`Parity: 0/18 (red)`),
+`contracts/LNFEE010.json`, commits the characterization suite red (`Parity: 0/31 (red)`),
 implements until green, runs the full verification loop, writes `LINEAGE.md`, and opens a PR.
 The template already contains a reference implementation of LNFEE010, so for the demo this
 step is mostly verification; for a client module it is the main build.

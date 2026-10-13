@@ -291,13 +291,14 @@ export function createServer(client: GeminiIngestClient = new GeminiIngestClient
           return errorResult("Contract not published: amended assertions are inconsistent.", { problems });
         }
 
+        const publishedAt = new Date();
         const version = bumpVersion(entry.contract.contractVersion, amendedAssertions.length > 0 ? "minor" : "patch");
         const contract = BehavioralContractSchema.parse({
           ...merged,
           contractVersion: version,
           verifiedBy: {
             agent: verifierAgent,
-            verifiedAt: new Date().toISOString(),
+            verifiedAt: publishedAt.toISOString(),
             findings: [...findings, ...resolutions.map((r) => `RESOLVED ${r.flag} :: ${r.resolution}`)],
           },
         });
@@ -306,6 +307,8 @@ export function createServer(client: GeminiIngestClient = new GeminiIngestClient
           contractVersion: version,
           assertionCount: contract.assertions.length,
           status: "spec_published",
+          // SLA clock starts at publication of the verified contract, not at ingest.
+          dueAt: new Date(publishedAt.getTime() + entry.workOrder.slaHours * 3_600_000).toISOString(),
         });
         const updated: SpecCacheEntry = { ...entry, contract, workOrder, reviewFlags: [] };
         const cachePath = await client.cache.update(updated);

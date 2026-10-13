@@ -3,13 +3,14 @@
 // only up to the point where it must call the API.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
+  assembleWorkOrder,
   bundleLegacySources,
   buildGeminiResponseSchema,
   collectReviewFlags,
@@ -112,7 +113,7 @@ function fixtureEntry() {
       assertionCount: 1,
       acceptanceCriteria: { parityPassRate: 1, minBranchCoverage: 0.9, maxP99LatencyMs: 250 },
       slaHours: 72,
-      status: "spec_published",
+      status: "draft",
       createdAt: "2026-10-01T09:00:00.000Z",
       dueAt: "2026-10-04T09:00:00.000Z",
     },
@@ -174,7 +175,7 @@ test("get_subsystem_spec and the resource return the cached contract", async () 
 });
 
 test("publish_verified_contract refuses unresolved flags, then publishes with resolutions", async () => {
-  await withServer(async (client) => {
+  await withServer(async (client, cacheDir) => {
     const refused = await client.callTool({
       name: "publish_verified_contract",
       arguments: { moduleId: "LNFEE010", findings: ["audit complete"] },
@@ -205,6 +206,13 @@ test("publish_verified_contract refuses unresolved flags, then publishes with re
     assert.equal(body.verified, true);
     assert.equal(body.assertions, 2);
     assert.deepEqual(body.reviewFlags, []);
+    // SLA clock starts at publication: status moves draft -> spec_published and dueAt is reset.
+    assert.equal(body.workOrder.status, "spec_published");
+    assert.ok(Date.parse(body.workOrder.dueAt) > Date.parse(fixtureEntry().workOrder.dueAt));
+    assert.equal(body.workOrder.assertionCount, 2);
+    // Every contract version is kept as an immutable history file.
+    const history = await readdir(path.join(cacheDir, "LNFEE010", "history"));
+    assert.deepEqual(history, [`${SHA}-v1.1.0.json`]);
   });
 });
 
@@ -302,4 +310,20 @@ test("template contract satisfies the bridge schema and matches the sample legac
     assert.equal(measured[file.path].sha256, file.sha256, `sha256 drift for ${file.path}`);
     assert.equal(measured[file.path].lineCount, file.lineCount, `line count drift for ${file.path}`);
   }
+});
+
+test("ingest creates work orders in draft; the SLA clock starts only at publication", () => {
+  const bundle = { files: [], bundleHash: SHA };
+  const contract = fixtureEntry().contract;
+  const options = {
+    moduleId: "LNFEE010",
+    clientAccount: "ACME-BANK",
+    podId: "pod-alpha",
+    targetLanguage: "Go",
+    targetServiceName: "late-fee-service",
+  };
+  const wo = assembleWorkOrder(options, bundle, contract, 72, new Date("2026-10-13T09:00:00.000Z"));
+  assert.equal(wo.status, "draft");
+  assert.equal(wo.branch, "modernize/LNFEE010");
+  assert.match(wo.workOrderId, /^WO-2026-[0-9]{6}$/);
 });

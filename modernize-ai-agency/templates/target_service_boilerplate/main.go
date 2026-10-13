@@ -328,7 +328,7 @@ func (s *LateFeeService) AssessAccount(ctx context.Context, cmd AssessCommand) (
 		slog.String("late_fee", assessment.LateFee.String()),
 		slog.String("previous_status", string(assessment.PreviousStatus)),
 		slog.String("new_status", string(assessment.NewStatus)),
-		slog.Int64("version", saved.Version))
+		slog.Int64("account_version", saved.Version))
 	return AssessResult{Assessment: assessment, Account: saved}, nil
 }
 

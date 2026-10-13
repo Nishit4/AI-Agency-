@@ -614,3 +614,60 @@ func TestStatusRecorderDefaultsTo200(t *testing.T) {
 		t.Fatalf("status=%d bytes=%d", sr.status, sr.bytes)
 	}
 }
+
+// topLevelKeyCounts returns how often each top-level key appears in one JSON object;
+// encoding/json silently keeps the last duplicate, so duplicates must be found by token.
+func topLevelKeyCounts(t *testing.T, line []byte) map[string]int {
+	t.Helper()
+	dec := json.NewDecoder(bytes.NewReader(line))
+	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
+		t.Fatalf("log line is not a JSON object: %s", line)
+	}
+	counts := map[string]int{}
+	for dec.More() {
+		key, err := dec.Token()
+		if err != nil {
+			t.Fatalf("decode key: %v", err)
+		}
+		counts[key.(string)]++
+		var skip json.RawMessage
+		if err := dec.Decode(&skip); err != nil {
+			t.Fatalf("decode value: %v", err)
+		}
+	}
+	return counts
+}
+
+// TestLogRecordsHaveUniqueKeys guards against fields that collide with the logger's
+// service/version attributes (the account version is logged as account_version).
+func TestLogRecordsHaveUniqueKeys(t *testing.T) {
+	var buf bytes.Buffer
+	cfg, err := LoadConfig(func(string) string { return "" })
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger := NewLogger(&buf, cfg)
+	repo := NewInMemoryAccountRepository()
+	svc := NewLateFeeService(repo, DefaultLateFeePolicy(), fixedClock, logger)
+	ctx := context.Background()
+	if _, err := svc.UpsertAccount(ctx, UpsertAccountCommand{AccountID: "LOG1", Balance: 10000, Status: StatusCurrent}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.AssessAccount(ctx, AssessCommand{AccountID: "LOG1", DaysPastDue: 30}); err != nil {
+		t.Fatal(err)
+	}
+	lines := bytes.Split(bytes.TrimSpace(buf.Bytes()), []byte("\n"))
+	if len(lines) == 0 || len(lines[0]) == 0 {
+		t.Fatal("expected at least one log record")
+	}
+	for _, line := range lines {
+		for key, n := range topLevelKeyCounts(t, line) {
+			if n > 1 {
+				t.Errorf("key %q appears %d times in %s", key, n, line)
+			}
+		}
+	}
+	if !bytes.Contains(buf.Bytes(), []byte(`"account_version":2`)) {
+		t.Errorf("assessment log should carry account_version 2: %s", buf.String())
+	}
+}

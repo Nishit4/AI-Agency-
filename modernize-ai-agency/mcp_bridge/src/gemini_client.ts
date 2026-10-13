@@ -471,7 +471,8 @@ export function assembleWorkOrder(
     assertionCount: contract.assertions.length,
     acceptanceCriteria: { parityPassRate: 1, minBranchCoverage: 0.9, maxP99LatencyMs: 250 },
     slaHours,
-    status: "spec_published",
+    // The SLA clock starts when the spec publisher verifies the contract (publish_verified_contract).
+    status: "draft",
     createdAt: now.toISOString(),
     dueAt: new Date(now.getTime() + slaHours * 3_600_000).toISOString(),
   };
@@ -515,9 +516,15 @@ export class SpecCache {
   async write(entry: SpecCacheEntry): Promise<string> {
     const validated = SpecCacheEntrySchema.parse(entry);
     const body = `${JSON.stringify(validated, null, 2)}\n`;
-    const versioned = path.join(this.moduleDir(entry.moduleId), `${entry.bundleHash}.json`);
+    const moduleDir = this.moduleDir(entry.moduleId);
+    const versioned = path.join(moduleDir, `${entry.bundleHash}.json`);
     await this.writeAtomic(versioned, body);
-    await this.writeAtomic(path.join(this.moduleDir(entry.moduleId), "latest.json"), body);
+    await this.writeAtomic(path.join(moduleDir, "latest.json"), body);
+    // Immutable audit trail: one file per contract version, never overwritten by later publishes.
+    await this.writeAtomic(
+      path.join(moduleDir, "history", `${entry.bundleHash}-v${validated.contract.contractVersion}.json`),
+      body,
+    );
     return versioned;
   }
 

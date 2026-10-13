@@ -128,7 +128,7 @@ G2 Characterization first .. PASS (test commit <sha>)
 G3 Static checks ........... PASS
 G4 Build & unit ............ PASS (<n> tests)
 G5 Race .................... PASS
-G6 Contract parity ......... PASS 18/18
+G6 Contract parity ......... PASS 31/31
 G7 Replay parity ........... PASS 1,204,331/1,204,331 records (window 2026-07-01..2026-09-30)
 G8 Branch coverage ......... PASS 93.4% (domain+app, gobco)
 G9 Lineage ................. PASS 4/4 rules traced

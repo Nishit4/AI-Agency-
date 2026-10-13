@@ -126,8 +126,8 @@ Reproduces 2000-CALC-FEE and 3000-ADVANCE-STATUS. Half-up rounding uses
 integer cents; status escalation never downgrades.
 
 Legacy-Lineage: src/LNFEE010.cbl:64-76, src/LNFEE010.cbl:81-105
-Contract: LNFEE010@1.1.0
-Parity: 18/18
+Contract: LNFEE010@1.2.0
+Parity: 31/31
 Coverage: 95.6%
 Work-Order: WO-2026-004211
 ```

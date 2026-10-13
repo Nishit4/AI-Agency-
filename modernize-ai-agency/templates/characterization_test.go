@@ -144,8 +144,9 @@ type Invocation struct {
 	State  map[string]any
 }
 
-// Result is what a modern operation returns on success. State must contain every entity
-// passed in, with its post-call values.
+// Result is what a modern operation returns. State must contain every entity passed in,
+// with its post-call values — on error paths too, so the harness can prove a rejected call
+// had no side effects.
 type Result struct {
 	Outputs map[string]any
 	State   map[string]any
@@ -230,17 +231,18 @@ func assessLateFeeReference(in Invocation) (Result, error) {
 		return Result{}, fmt.Errorf("daysPastDue %q must be a non-negative integer", dpdNumber)
 	}
 
-	// 1000-VALIDATE — first failing check wins.
+	// 1000-VALIDATE — first failing check wins; a rejected call leaves state untouched.
+	unchanged := Result{State: in.State}
 	rank, known := statusRank[status]
 	switch {
 	case !known:
-		return Result{}, &ContractError{Code: "INVALID_STATUS", LegacyReturnCode: "08", Message: status}
+		return unchanged, &ContractError{Code: "INVALID_STATUS", LegacyReturnCode: "08", Message: status}
 	case status == "CLOSED":
-		return Result{}, &ContractError{Code: "ACCOUNT_CLOSED", LegacyReturnCode: "12"}
+		return unchanged, &ContractError{Code: "ACCOUNT_CLOSED", LegacyReturnCode: "12"}
 	case balance < 0:
-		return Result{}, &ContractError{Code: "NEGATIVE_BALANCE", LegacyReturnCode: "08"}
+		return unchanged, &ContractError{Code: "NEGATIVE_BALANCE", LegacyReturnCode: "08"}
 	case dpd > 999:
-		return Result{}, &ContractError{Code: "INVALID_DAYS_PAST_DUE", LegacyReturnCode: "08"}
+		return unchanged, &ContractError{Code: "INVALID_DAYS_PAST_DUE", LegacyReturnCode: "08"}
 	}
 
 	// 2000-CALC-FEE — 5% (500 bps) rounded half-up to cents, capped at 25.00, after day 15.
@@ -611,6 +613,11 @@ func evaluate(c Contract, a Assertion) []string {
 			mismatches = append(mismatches, fmt.Sprintf("legacy return code: expected %s, got %s",
 				a.Expected.Error.LegacyReturnCode, ce.LegacyReturnCode))
 		}
+		if result.State == nil {
+			mismatches = append(mismatches, "error path returned no state; adapters must return the post-call state so side effects can be checked")
+		} else {
+			mismatches = append(mismatches, verifyState(Assertion{StringComparison: stringMode}, before, result.State, tol)...)
+		}
 		return mismatches
 	}
 
@@ -708,6 +715,9 @@ func TestContractIntegrity(t *testing.T) {
 				}
 				if a.Category == "error" && a.Expected.Error == nil {
 					t.Errorf("%s is category=error without expected.error", a.AssertionID)
+				}
+				if a.Expected.Error != nil && len(a.Expected.StateTransitions) > 0 {
+					t.Errorf("%s expects an error and state transitions; a rejected call must not change state", a.AssertionID)
 				}
 				if a.Category == "boundary" && a.Boundary == nil {
 					t.Errorf("%s is category=boundary without a boundary descriptor", a.AssertionID)
@@ -841,4 +851,34 @@ func TestUndeclaredStateChangeFails(t *testing.T) {
 	if got := verifyState(a, before, after, tol); len(got) != 1 || !strings.Contains(got[0], "undeclared change") {
 		t.Fatalf("expected one undeclared-change mismatch, got %v", got)
 	}
+}
+
+// TestErrorPathSideEffectsFail proves the harness rejects an operation that reports the
+// expected error but still mutates state, and one that hides its post-call state.
+func TestErrorPathSideEffectsFail(t *testing.T) {
+	c := Contract{DefaultTolerance: Tolerance{Absolute: "0", Relative: "0", RoundingMode: "HALF_UP", Scale: 2}}
+	a := Assertion{
+		AssertionID:  "A-900",
+		Operation:    "LeakyReject",
+		InitialState: map[string]any{"account": map[string]any{"status": "CURRENT"}},
+		Expected:     Expected{Error: &ExpectedError{Code: "NEGATIVE_BALANCE", LegacyReturnCode: "08"}},
+	}
+	rejectErr := &ContractError{Code: "NEGATIVE_BALANCE", LegacyReturnCode: "08"}
+	cases := map[string]Operation{
+		"mutates state": func(Invocation) (Result, error) {
+			return Result{State: map[string]any{"account": map[string]any{"status": "DELINQUENT"}}}, rejectErr
+		},
+		"hides state": func(Invocation) (Result, error) { return Result{}, rejectErr },
+	}
+	for name, op := range cases {
+		operations["LeakyReject"] = op
+		if got := evaluate(c, a); len(got) == 0 {
+			t.Errorf("%s: expected a parity failure, got none", name)
+		}
+	}
+	operations["LeakyReject"] = func(in Invocation) (Result, error) { return Result{State: in.State}, rejectErr }
+	if got := evaluate(c, a); len(got) != 0 {
+		t.Errorf("clean rejection should pass, got %v", got)
+	}
+	delete(operations, "LeakyReject")
 }

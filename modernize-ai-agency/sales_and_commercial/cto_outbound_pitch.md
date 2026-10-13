@@ -87,7 +87,7 @@ Bracketed items are filled from research for each prospect. Never send a bracket
 >
 > [Specific trigger: e.g. "Your posting for a PL/SQL lead mentions 'reverse-engineering billing packages'."] That's the hard part of every modernization: the rules live in the code, not the docs.
 >
-> Our approach: Gemini reads the whole subsystem (copybooks, packed-decimal fields, package state) and extracts every rule into executable assertions with line-level lineage; engineers verify them; Claude Code writes the characterization tests first, then the Go/TypeScript service, which merges only at 100% parity on replayed production data.
+> Our approach: Gemini reads the whole subsystem (copybooks, packed-decimal fields, package state) and extracts every rule into executable assertions with line-level lineage; engineers verify them; Claude Code writes the characterization tests first, then the Go/TypeScript service, which merges only at 100% parity on your masked production history.
 >
 > Happy to walk your team through it on a sample COBOL module in 15 minutes. Open to it?
 >
@@ -126,7 +126,7 @@ Bracketed items are filled from research for each prospect. Never send a bracket
 > Straight answer: the pilot is a fixed $50,000 for one module up to 50,000 lines, 14 days, paid half up front and half on acceptance — and if we don't reach 100% parity after a 10-business-day cure period, the second half isn't due and we refund half of the first. If you continue, the full pilot fee is credited against a $100,000/month retainer with a dedicated pod. Worth 15 minutes to see if your module fits?
 
 **Send me something:**
-> Of course. In short: one module up to 50,000 lines, 14 days, $50,000 fixed; every business rule is extracted into executable tests traced to source lines, and the new service is accepted only at 100% parity on your masked production history. Attached is the behavioral contract from our COBOL demo module (18 assertions) so you can see exactly what you'd receive. If it resonates, the fastest way to judge fit is 15 minutes on your actual module.
+> Of course. In short: one module up to 50,000 lines, 14 days, $50,000 fixed; every business rule is extracted into executable tests traced to source lines, and the new service is accepted only at 100% parity on your masked production history. Attached is the behavioral contract from our COBOL demo module (31 assertions) so you can see exactly what you'd receive. If it resonates, the fastest way to judge fit is 15 minutes on your actual module.
 
 ---
 

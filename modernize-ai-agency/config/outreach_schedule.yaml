@@ -130,7 +130,10 @@ compliance:
   honor_opt_out_within_hours: 24
   lawful_basis_eu_uk: legitimate_interest
   legitimate_interest_note: "B2B outreach to a role-based work address about modernizing systems the recipient is responsible for."
-  regions_requiring_opt_in: []          # add country codes here if counsel advises opt-in only
+  # Never cold-emailed: prior consent is required for advertising email, B2B included
+  # (Germany: UWG s.7(2) no.2; Austria: TKG 2021 s.174). Reach these markets through
+  # events, referrals, partners, or inbound only. Add more codes as counsel advises.
+  regions_requiring_opt_in: [DE, AT]
   no_purchased_lists_without_provenance: true
   record_retention_days: 730
 

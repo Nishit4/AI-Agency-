@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Alarm clock illustration shown on the login and sign-up screens. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="160dp"
+    android:viewportWidth="160"
+    android:viewportHeight="160">
+    <path
+        android:fillColor="@color/md_primary_container"
+        android:pathData="M80,80m-76,0a76,76 0,1 1,152 0a76,76 0,1 1,-152 0" />
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M40,34m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M120,34m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M74,22h12v12h-12z" />
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M80,86m-52,0a52,52 0,1 1,104 0a52,52 0,1 1,-104 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,86m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0" />
+    <path
+        android:fillColor="#13126B"
+        android:pathData="M77,60h6v26h-6z" />
+    <path
+        android:fillColor="#13126B"
+        android:pathData="M80,83h24v6h-24z" />
+    <path
+        android:fillColor="#F97316"
+        android:pathData="M80,86m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+</vector>

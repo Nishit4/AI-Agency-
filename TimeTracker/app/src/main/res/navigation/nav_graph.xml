@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/timeTrackerFragment">
+
+    <fragment
+        android:id="@+id/timeTrackerFragment"
+        android:name="com.timetracker.app.ui.tracker.TimeTrackerFragment"
+        android:label="@string/title_stopwatch"
+        tools:layout="@layout/fragment_time_tracker" />
+
+    <fragment
+        android:id="@+id/taskFragment"
+        android:name="com.timetracker.app.ui.tasks.TaskFragment"
+        android:label="@string/title_tasks"
+        tools:layout="@layout/fragment_task" />
+
+    <fragment
+        android:id="@+id/reportFragment"
+        android:name="com.timetracker.app.ui.report.ReportFragment"
+        android:label="@string/title_report"
+        tools:layout="@layout/fragment_report" />
+
+    <fragment
+        android:id="@+id/habitFragment"
+        android:name="com.timetracker.app.ui.habits.HabitFragment"
+        android:label="@string/title_habits"
+        tools:layout="@layout/fragment_habit" />
+
+    <fragment
+        android:id="@+id/exerciseFragment"
+        android:name="com.timetracker.app.ui.exercise.ExerciseFragment"
+        android:label="@string/title_exercise"
+        tools:layout="@layout/fragment_exercise" />
+
+    <fragment
+        android:id="@+id/sleepFragment"
+        android:name="com.timetracker.app.ui.sleep.SleepFragment"
+        android:label="@string/title_sleep"
+        tools:layout="@layout/fragment_sleep" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.timetracker.app.ui.settings.SettingsFragment"
+        android:label="@string/title_settings"
+        tools:layout="@layout/fragment_settings" />
+</navigation>

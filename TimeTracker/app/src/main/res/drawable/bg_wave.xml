@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Decorative waves at the bottom of the login and sign-up screens. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="140dp"
+    android:viewportWidth="400"
+    android:viewportHeight="140">
+    <path
+        android:fillColor="@color/wave_back"
+        android:pathData="M0,60 C80,20 160,20 240,50 C300,72 350,80 400,50 L400,140 L0,140 Z" />
+    <path
+        android:fillColor="@color/wave_front"
+        android:pathData="M0,95 C70,65 150,60 220,85 C290,110 340,105 400,80 L400,140 L0,140 Z" />
+</vector>

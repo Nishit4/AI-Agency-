@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Time Tracker</string>
+
+    <!-- Page titles -->
+    <string name="title_stopwatch">Stopwatch</string>
+    <string name="title_tasks">Tasks</string>
+    <string name="title_report">Report</string>
+    <string name="title_habits">Habit Tracker</string>
+    <string name="title_exercise">Exercise</string>
+    <string name="title_sleep">Sleep</string>
+    <string name="title_settings">Settings</string>
+
+    <!-- Common actions -->
+    <string name="action_login">Login</string>
+    <string name="action_sign_up">Sign Up</string>
+    <string name="action_logout">Logout</string>
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_lap">Lap</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_add">Add</string>
+    <string name="value_none">—</string>
+
+    <!-- Login and sign-up -->
+    <string name="login_title">Login</string>
+    <string name="login_subtitle">Track your time, tasks and habits</string>
+    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="signup_title">Signup</string>
+    <string name="signup_subtitle">Create an account to get started</string>
+    <string name="signup_have_account">Have an account?</string>
+    <string name="hint_full_name">Full name</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_confirm_password">Confirm password</string>
+    <string name="hint_current_password">Current password</string>
+    <string name="hint_new_password">New password</string>
+    <string name="helper_username">3–20 letters, numbers, dots or underscores</string>
+    <string name="helper_password">At least 6 characters</string>
+
+    <!-- Validation errors -->
+    <string name="error_required">This field is required</string>
+    <string name="error_name_required">Please enter your name</string>
+    <string name="error_username_required">Please enter a username</string>
+    <string name="error_username_invalid">Use 3–20 letters, numbers, dots or underscores</string>
+    <string name="error_username_taken">This username is already taken</string>
+    <string name="error_password_required">Please enter a password</string>
+    <string name="error_password_too_short">Password must be at least 6 characters</string>
+    <string name="error_passwords_do_not_match">Passwords do not match</string>
+    <string name="error_invalid_credentials">Incorrect username or password</string>
+    <string name="error_wrong_password">Current password is incorrect</string>
+    <string name="error_task_title_required">Please enter a task title</string>
+    <string name="error_reminder_in_past">Reminder time must be in the future</string>
+    <string name="error_end_before_start">End time must be after the start time</string>
+    <string name="error_habit_parts">Enter a number between 1 and %1$d</string>
+    <string name="error_exercise_minutes">Enter minutes between 1 and %1$d</string>
+    <string name="error_sleep_duration">Check the times: sleep must be under 20 hours</string>
+
+    <!-- Navigation drawer -->
+    <string name="drawer_welcome">Welcome Back !!</string>
+    <string name="drawer_section_profile">Profile</string>
+    <string name="drawer_level">Level %1$d · %2$s · %3$d XP</string>
+    <string name="logout_title">Logout?</string>
+    <string name="logout_message">You will need your username and password to sign in again. A running stopwatch will be stopped.</string>
+
+    <!-- Level titles (gamification) -->
+    <string name="level_title_beginner">Beginner</string>
+    <string name="level_title_focused">Focused</string>
+    <string name="level_title_achiever">Achiever</string>
+    <string name="level_title_pro">Pro</string>
+    <string name="level_title_master">Master</string>
+    <string name="level_title_legend">Legend</string>
+
+    <!-- Stopwatch / time tracker -->
+    <string name="tracker_zero_time" translatable="false">00:00:00</string>
+    <string name="tracker_activity_hint">What are you working on?</string>
+    <string name="tracker_activity_helper">Pick one of your tasks or type any activity</string>
+    <string name="tracker_hint">Lap saves the time so far and keeps the stopwatch running. Stop saves and stops.</string>
+    <string name="tracker_started_at">Started at %1$s</string>
+    <string name="tracker_today_records">Today\'s records</string>
+    <string name="tracker_today_total">%1$s tracked today</string>
+    <string name="tracker_add_manual">Add</string>
+    <string name="tracker_empty">No time recorded today. Press Start to begin tracking.</string>
+    <string name="tracker_name_dialog_title">What were you doing?</string>
+    <string name="tracker_saved">Saved \"%1$s\" (%2$s)</string>
+    <string name="tracker_too_short">Too short to save. Track at least one second.</string>
+    <string name="record_deleted">Record deleted</string>
+    <string name="reset_title">Reset the stopwatch?</string>
+    <string name="reset_message">The time since you pressed Start or Lap will not be saved.</string>
+    <string name="manual_entry_title">Add time manually</string>
+    <string name="manual_entry_date">Date</string>
+    <string name="manual_entry_start">Start</string>
+    <string name="manual_entry_end">End</string>
+
+    <!-- Tasks -->
+    <string name="task_heading">Add your tasks</string>
+    <string name="task_summary">%1$d pending · %2$d done</string>
+    <string name="task_filter_all">All</string>
+    <string name="task_filter_pending">Pending</string>
+    <string name="task_filter_done">Done</string>
+    <string name="task_empty_all">No tasks yet. Tap + to add your first task.</string>
+    <string name="task_empty_pending">Nothing pending. Great job!</string>
+    <string name="task_empty_done">No completed tasks yet.</string>
+    <string name="task_new">New task</string>
+    <string name="task_edit">Edit task</string>
+    <string name="task_save">Save task</string>
+    <string name="task_priority">Priority</string>
+    <string name="task_reminder">Reminder</string>
+    <string name="task_set_reminder">Set reminder</string>
+    <string name="task_reminder_at">Reminder: %1$s</string>
+    <string name="task_reminder_passed">Reminded: %1$s</string>
+    <string name="task_deleted">Task deleted</string>
+    <string name="task_completed_xp">Task completed! +%1$d XP</string>
+    <string name="hint_task_title">Title</string>
+    <string name="hint_task_description">Description (optional)</string>
+    <string name="priority_low">Low</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_high">High</string>
+    <string name="reminder_pick_date">Reminder date</string>
+    <string name="reminder_pick_time">Reminder time</string>
+
+    <!-- Habits -->
+    <string name="habit_today">Today</string>
+    <string name="habit_level_title">Level %1$d · %2$s</string>
+    <string name="habit_total_xp">%1$d XP in total</string>
+    <string name="habit_xp_progress">%1$d / %2$d XP to level %3$d</string>
+    <string name="habit_today_summary">%1$d of %2$d habits completed today</string>
+    <string name="habit_xp_rules">Break each habit into small parts. Every part done earns %1$d XP and finishing a habit for the day earns a %2$d XP bonus. Completed tasks and workouts earn XP too.</string>
+    <string name="habit_progress">%1$d/%2$d parts today</string>
+    <string name="habit_done_today">Done for today</string>
+    <string name="habit_empty">No habits yet. Tap + to add one, e.g. \"Drink water\" with 8 parts.</string>
+    <string name="habit_new">New habit</string>
+    <string name="habit_edit">Edit habit</string>
+    <string name="habit_reset_today">Reset today</string>
+    <string name="habit_delete_title">Delete habit?</string>
+    <string name="habit_delete_message">\"%1$s\" and all of its progress will be deleted.</string>
+    <string name="habit_part_done_xp">Nice! +%1$d XP</string>
+    <string name="habit_completed_xp">%1$s done for today! +%2$d XP</string>
+    <string name="hint_habit_name">Habit name</string>
+    <string name="hint_habit_parts">Parts per day</string>
+    <string name="helper_habit_parts">e.g. 8 glasses of water or 3 study sessions</string>
+    <plurals name="habit_streak">
+        <item quantity="one">%d-day streak</item>
+        <item quantity="other">%d-day streak</item>
+    </plurals>
+
+    <!-- Exercise -->
+    <string name="exercise_summary_title">This week</string>
+    <string name="exercise_stat_workouts">Workouts</string>
+    <string name="exercise_stat_week_minutes">Minutes this week</string>
+    <string name="exercise_stat_today_minutes">Minutes today</string>
+    <string name="exercise_empty">No workouts logged yet. Tap + to add one.</string>
+    <string name="exercise_new">Log a workout</string>
+    <string name="exercise_minutes">%1$d min</string>
+    <string name="exercise_details_sets">%1$s · %2$d sets</string>
+    <string name="exercise_details_sets_reps">%1$s · %2$d sets × %3$d reps</string>
+    <string name="exercise_added_xp">Workout saved! +%1$d XP</string>
+    <string name="exercise_deleted">Workout deleted</string>
+    <string name="hint_exercise_name">Exercise</string>
+    <string name="hint_exercise_minutes">Duration (minutes)</string>
+    <string name="hint_exercise_sets">Sets (optional)</string>
+    <string name="hint_exercise_reps">Reps (optional)</string>
+    <string-array name="exercise_suggestions">
+        <item>Running</item>
+        <item>Walking</item>
+        <item>Cycling</item>
+        <item>Swimming</item>
+        <item>Yoga</item>
+        <item>Push-ups</item>
+        <item>Squats</item>
+        <item>Plank</item>
+        <item>Skipping</item>
+        <item>Stretching</item>
+        <item>Gym workout</item>
+    </string-array>
+
+    <!-- Sleep -->
+    <string name="sleep_summary_title">Sleep overview</string>
+    <string name="sleep_stat_last_night">Last night</string>
+    <string name="sleep_stat_average">7-day average</string>
+    <string name="sleep_stat_quality">Avg. quality</string>
+    <string name="sleep_empty">No sleep logged yet. Tap + to add last night.</string>
+    <string name="sleep_new">Log sleep</string>
+    <string name="sleep_woke_up_on">Woke up on %1$s</string>
+    <string name="sleep_pick_wake_date">Day you woke up</string>
+    <string name="sleep_bedtime">Bedtime</string>
+    <string name="sleep_wake_time">Wake-up time</string>
+    <string name="sleep_duration">Duration: %1$s</string>
+    <string name="sleep_quality">How well did you sleep?</string>
+    <string name="sleep_deleted">Sleep entry deleted</string>
+    <string name="hint_sleep_note">Note (optional)</string>
+
+    <!-- Report -->
+    <string name="report_day">Day</string>
+    <string name="report_week">Week</string>
+    <string name="report_pick_date">Show report for</string>
+    <string name="report_stat_tracked">Time tracked</string>
+    <string name="report_stat_tasks">Tasks completed</string>
+    <string name="report_stat_habits">Habit goals met</string>
+    <string name="report_stat_workouts">Workouts</string>
+    <string name="report_stat_sleep">Average sleep</string>
+    <string name="report_stat_top">Top activity</string>
+    <string name="report_workouts_value">%1$d (%2$d min)</string>
+    <string name="report_time_by_activity">Time by activity</string>
+    <string name="report_bar_chart">Bar chart</string>
+    <string name="report_pie_day">Day\'s activity</string>
+    <string name="report_pie_week">This week</string>
+    <string name="report_hours_per_day">Hours per day</string>
+    <string name="report_empty">No time tracked in this period yet.</string>
+    <string name="report_other">Other</string>
+    <string name="report_legend_value">%1$s · %2$d%%</string>
+
+    <!-- Settings -->
+    <string name="settings_section_account">Account</string>
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_section_data">Data &amp; about</string>
+    <string name="settings_username">\@%1$s</string>
+    <string name="settings_edit_name">Edit name</string>
+    <string name="settings_change_password">Change password</string>
+    <string name="settings_password_changed">Password changed</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_on">On</string>
+    <string name="settings_notifications_off">Off. Tap to allow task reminders.</string>
+    <string name="settings_exact_alarms">Exact reminder times</string>
+    <string name="settings_exact_alarms_off">Off. Reminders may arrive a few minutes late.</string>
+    <string name="settings_sample_data">Load sample data</string>
+    <string name="settings_sample_data_summary">Adds a week of example records to try the report and charts</string>
+    <string name="sample_data_confirm">This adds example tasks, time records, habits, workouts and sleep entries for the past week to your account.</string>
+    <string name="sample_data_added">Sample data added</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="about_message">Time Tracker %1$s\n\nAn all-in-one app for tracking time, tasks, habits, exercise and sleep, with weekly reports and gamified habit progress.\n\nAll data is stored on this device.</string>
+
+    <!-- Notifications -->
+    <string name="channel_stopwatch_name">Stopwatch</string>
+    <string name="channel_stopwatch_description">Shows the running stopwatch</string>
+    <string name="channel_reminders_name">Task reminders</string>
+    <string name="channel_reminders_description">Alarms for tasks with a reminder</string>
+    <string name="notification_stopwatch_title">Tracking time</string>
+    <string name="notification_stopwatch_untitled">Untitled activity</string>
+    <string name="notification_reminder_text">Task reminder</string>
+
+    <!-- Accessibility descriptions -->
+    <string name="cd_add_task">Add task</string>
+    <string name="cd_add_habit">Add habit</string>
+    <string name="cd_add_exercise">Log a workout</string>
+    <string name="cd_add_sleep">Log sleep</string>
+    <string name="cd_mark_done">Mark as done</string>
+    <string name="cd_delete_task">Delete %1$s</string>
+    <string name="cd_set_reminder">Set reminder for %1$s</string>
+    <string name="cd_delete_record">Delete %1$s</string>
+    <string name="cd_delete_exercise">Delete %1$s</string>
+    <string name="cd_delete_sleep">Delete sleep entry</string>
+    <string name="cd_sleep_quality">Sleep quality %1$d out of 5</string>
+    <string name="cd_add_part">Add a part to %1$s</string>
+    <string name="cd_remove_part">Remove a part from %1$s</string>
+    <string name="cd_habit_options">Options for %1$s</string>
+    <string name="cd_previous_period">Previous</string>
+    <string name="cd_next_period">Next</string>
+    <string name="cd_chart_prefix">"Chart: "</string>
+</resources>

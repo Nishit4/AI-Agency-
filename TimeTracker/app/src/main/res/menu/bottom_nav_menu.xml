@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item ids match the destination ids in navigation/nav_graph.xml. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/timeTrackerFragment"
+        android:icon="@drawable/ic_timer"
+        android:title="@string/title_stopwatch" />
+    <item
+        android:id="@+id/taskFragment"
+        android:icon="@drawable/ic_task"
+        android:title="@string/title_tasks" />
+    <item
+        android:id="@+id/reportFragment"
+        android:icon="@drawable/ic_report"
+        android:title="@string/title_report" />
+</menu>

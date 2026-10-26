@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item ids match the destination ids in navigation/nav_graph.xml. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group
+        android:id="@+id/groupPages"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/timeTrackerFragment"
+            android:icon="@drawable/ic_timer"
+            android:title="@string/title_stopwatch" />
+        <item
+            android:id="@+id/taskFragment"
+            android:icon="@drawable/ic_task"
+            android:title="@string/title_tasks" />
+        <item
+            android:id="@+id/reportFragment"
+            android:icon="@drawable/ic_report"
+            android:title="@string/title_report" />
+        <item
+            android:id="@+id/habitFragment"
+            android:icon="@drawable/ic_habit"
+            android:title="@string/title_habits" />
+        <item
+            android:id="@+id/exerciseFragment"
+            android:icon="@drawable/ic_fitness"
+            android:title="@string/title_exercise" />
+        <item
+            android:id="@+id/sleepFragment"
+            android:icon="@drawable/ic_sleep"
+            android:title="@string/title_sleep" />
+    </group>
+
+    <item
+        android:id="@+id/menuProfile"
+        android:title="@string/drawer_section_profile">
+        <menu>
+            <item
+                android:id="@+id/settingsFragment"
+                android:icon="@drawable/ic_settings"
+                android:title="@string/title_settings" />
+            <item
+                android:id="@+id/action_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/action_logout" />
+        </menu>
+    </item>
+</menu>

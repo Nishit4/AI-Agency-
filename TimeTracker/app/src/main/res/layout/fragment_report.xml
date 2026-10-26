@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/rangeToggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:checkedButton="@+id/weekButton"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/dayButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/report_day" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/weekButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/report_week" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/previousButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_previous_period"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/rangeLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="8dp"
+                    android:gravity="center"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    app:drawableStartCompat="@drawable/ic_calendar"
+                    app:drawableTint="?attr/colorPrimary"
+                    tools:text="20 Oct – 26 Oct 2026" />
+
+                <ImageButton
+                    android:id="@+id/nextButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_next_period"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurface" />
+            </LinearLayout>
+
+            <!-- Summary tiles, two per row. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <include
+                    android:id="@+id/statTracked"
+                    layout="@layout/item_stat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/statTasks"
+                    layout="@layout/item_stat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <include
+                    android:id="@+id/statHabits"
+                    layout="@layout/item_stat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/statWorkouts"
+                    layout="@layout/item_stat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <include
+                    android:id="@+id/statSleep"
+                    layout="@layout/item_stat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/statTop"
+                    layout="@layout/item_stat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <!-- Time per activity, as a pie or bar chart. -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Material3.CardView.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/report_time_by_activity"
+                            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/chartTypeSwitch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/report_bar_chart" />
+                    </LinearLayout>
+
+                    <com.timetracker.app.ui.chart.PieChartView
+                        android:id="@+id/pieChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="240dp"
+                        android:layout_marginTop="12dp" />
+
+                    <com.timetracker.app.ui.chart.BarChartView
+                        android:id="@+id/activityBarChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="240dp"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/chartEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingVertical="32dp"
+                        android:text="@string/report_empty"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/legendContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Hours per day in the selected week. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dailyCard"
+                style="@style/Widget.Material3.CardView.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/report_hours_per_day"
+                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                    <com.timetracker.app.ui.chart.BarChartView
+                        android:id="@+id/dailyBarChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="12dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

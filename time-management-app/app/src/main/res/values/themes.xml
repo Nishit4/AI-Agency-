@@ -1,0 +1,4 @@
+<resources>
+    <!-- The UI is drawn by Compose; this theme only covers the window before Compose takes over. -->
+    <style name="Theme.TimeManager" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

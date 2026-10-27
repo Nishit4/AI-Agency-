@@ -1,0 +1,68 @@
+{
+  // Run with: Terminal → Run Task…  (or Ctrl+Shift+B for "Start Mom's Kitchen")
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Mom's Kitchen",
+      "detail": "Starts the local database and the website together",
+      "dependsOn": ["Start local MongoDB", "Start dev server"],
+      "dependsOrder": "sequence",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start local MongoDB",
+      "detail": "npm run db — skip if MongoDB is already installed or you use Atlas",
+      "type": "npm",
+      "script": "db",
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "moms-kitchen" },
+      "problemMatcher": {
+        "owner": "moms-kitchen-db",
+        "pattern": { "regexp": "^__never_matches__$" },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "Starting local MongoDB",
+          "endsPattern": "MongoDB is running|Could not start MongoDB"
+        }
+      }
+    },
+    {
+      "label": "Start dev server",
+      "detail": "npm run dev — opens on http://localhost:3000",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "moms-kitchen" },
+      "problemMatcher": {
+        "owner": "moms-kitchen-next",
+        "pattern": { "regexp": "^__never_matches__$" },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "next dev|Next\\.js",
+          "endsPattern": "Ready in"
+        }
+      }
+    },
+    {
+      "label": "Reset sample data",
+      "detail": "npm run seed — deletes everything and inserts the demo data again",
+      "type": "npm",
+      "script": "seed",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run unit tests",
+      "type": "npm",
+      "script": "test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Typecheck & lint",
+      "type": "shell",
+      "command": "npm run typecheck && npm run lint",
+      "problemMatcher": ["$tsc"]
+    }
+  ]
+}

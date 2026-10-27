@@ -1,0 +1,24 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "editor.tabSize": 2,
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescriptreact": "html"
+  },
+  "eslint.workingDirectories": ["."],
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.mongo-data": true
+  },
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/.mongo-data/**": true
+  }
+}

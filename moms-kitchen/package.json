@@ -1,0 +1,43 @@
+{
+  "name": "moms-kitchen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mom's Kitchen - Home Food & Tiffin Marketplace (Next.js full-stack project)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "seed": "tsx scripts/seed.ts",
+    "db": "node scripts/local-db.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "lucide-react": "^1.62.0",
+    "mongoose": "^8.24.7",
+    "next": "15.5.28",
+    "next-auth": "5.0.0-beta.32",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@next/env": "15.5.28",
+    "@types/node": "^20.14.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "15.5.28",
+    "mongodb-memory-server-core": "^11.3.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.23.15",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}
